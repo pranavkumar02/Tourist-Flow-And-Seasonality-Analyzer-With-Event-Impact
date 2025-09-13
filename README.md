@@ -1,4 +1,4 @@
-## Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
+#Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
 # Phase 1 — Problem Understanding & Planning
 
 Define business use-case: Tourism demand forecasting + Event/Festival impact analysis.
