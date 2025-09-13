@@ -1,4 +1,4 @@
-# Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact]
+## Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
 # Phase 1 — Problem Understanding & Planning
 
 Define business use-case: Tourism demand forecasting + Event/Festival impact analysis.
@@ -9,7 +9,7 @@ Gather requirements: Tech stack, budget (per request cost), cloud deployment fea
 
 # Phase 2 — Data Collection & Preparation
 
-# Collect datasets:
+Collect datasets:
 
 Tourism data (visitors, hotel stays, flights).
 
@@ -17,7 +17,7 @@ Event/Festival calendar (local + international).
 
 Weather, economic indicators (optional) for enrichment.
 
-# Preprocess:
+Preprocess:
 
 Handle missing values, duplicates.
 
@@ -25,7 +25,7 @@ Standardize formats (dates, city names).
 
 Create event-mapping table (city → event dates).
 
-## Phase 3 — Exploratory Data Analysis (EDA)
+# Phase 3 — Exploratory Data Analysis (EDA)
 
 Analyze historical trends (yearly/monthly growth).
 
@@ -37,7 +37,7 @@ Visualize with line charts, heatmaps, bar plots.
 
 ## Phase 4 — Modeling & Forecasting
 
-# Baseline Models:
+Baseline Models:
 
 Time series (ARIMA, SARIMA, Prophet).
 
@@ -51,7 +51,7 @@ LLM Integration:
 
 Query-based insights (e.g., “Which event gave the biggest tourism spike in NYC last 5 years?”).
 
-## Phase 5 — Data Pipeline & Cloud Deployment
+# Phase 5 — Data Pipeline & Cloud Deployment
 
 Build ETL pipeline (raw data → cleaning → storage → model → visualization).
 
@@ -59,7 +59,7 @@ Deploy models & dashboards on cloud (AWS/GCP/Azure).
 
 Cost optimization: per request API usage + caching frequent queries.
 
-## Phase 6 — Visualization & Front-End
+# Phase 6 — Visualization & Front-End
 
 Build dashboards (Tableau / Power BI / Streamlit).
 
