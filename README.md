@@ -35,31 +35,11 @@ Visualize with line charts, heatmaps, bar plots.
 
 ## Phase 4 — Modeling & Forecasting
 
-Baseline Models:
-
-Time series.
-
-Event/Festival Impact Models:
-
-Difference-in-Differences (DiD).
-
-Regression with Event Dummy Variables.
-
-LLM Integration:
-
-Query-based insights (e.g., “Which event gave the biggest tourism spike in NYC last 5 years?”).
-
 ## Phase 5 — Data Pipeline & Cloud Deployment
-
-Build ETL pipeline (raw data → cleaning → storage → model → visualization).
-
-Deploy models & dashboards on cloud (AWS/GCP/Azure).
-
-Cost optimization: per request API usage + caching frequent queries.
 
 ## Phase 6 — Visualization & Front-End
 
-Build dashboards (Tableau / Power BI / Streamlit).
+Build dashboard
 
 Components:
 
