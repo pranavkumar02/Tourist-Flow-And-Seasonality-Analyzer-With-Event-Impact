@@ -16,8 +16,6 @@ The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy
 
 **PostgreSQL + PostGIS:** Geospatial queries and analytics for city/park mapping.
 
-**Scalable Architecture:** Modular ETL, containerized services, CI/CD ready.
-
 **Business Intelligence Dashboard:** KPIs, trend charts, and actionable insights.
 
 **Business Recommendations:** Insights panel suggesting promotion opportunities and fast-growing destinations.
@@ -33,9 +31,9 @@ Layer	Technology	Description
 
 **Database:**	PostgreSQL Relational + geospatial queries.
 
-**Cloud	AWS:** (RDS, S3, ECS)	Hosting, storage, compute.
+**Cloud	AWS:** (RDS, S3)	Hosting, storage, compute.
 
-**Infrastructure:** AWS (EC2 for app hosting, S3 for raw data).
+**Infrastructure:** AWS ( S3 for raw data).
 
 **Version Control:**	GitHub	Collaboration, issues, PRs.
 
@@ -69,7 +67,7 @@ The frontend is a Dash app featuring:
 
 **Storage:** AWS S3 buckets for raw, cleaned, and mart data.
 
-**Deployment:** ECS Fargate for Dash app, GitHub Actions.
+**Deployment:** dashboard, GitHub Actions.
 
 
 ## Project Status
