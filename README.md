@@ -7,12 +7,19 @@ The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy
 
 ## Key Features
 **Interactive Map (Plotly + Dash):** View current hotspots and off-season destinations.
+
 **Seasonality Insights:** Monthly visitor peaks, off-peak trends, and growth analysis.
+
 **Event Impact Metrics:** Quantify how festivals/events affect tourist inflows.
+
 **Cloud-Based Database:** PostgreSQL hosted on AWS RDS for scalable data handling.
+
 **PostgreSQL + PostGIS:** Geospatial queries and analytics for city/park mapping.
+
 **Scalable Architecture:** Modular ETL, containerized services, CI/CD ready.
+
 **Business Intelligence Dashboard:** KPIs, trend charts, and actionable insights.
+
 **Business Recommendations:** Insights panel suggesting promotion opportunities and fast-growing destinations.
 
 ## Tech Stack
