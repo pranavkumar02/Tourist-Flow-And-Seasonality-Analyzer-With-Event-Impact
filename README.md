@@ -76,7 +76,7 @@ In Progress (Data Track - Midterm Phase)
 
 Architecture finalized
 
-Data sources identified (TSA, NPS, Hotels, Events)
+Data sources identified ( NPS, TSA, Hotels, Events)
 
 ETL in development
 
