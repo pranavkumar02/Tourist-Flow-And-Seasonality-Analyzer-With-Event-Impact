@@ -1,52 +1,93 @@
 # Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
-## Phase 1 — Problem Understanding & Planning
+**Description:**
+A data-driven analytics platform that tracks tourist inflows, detects seasonal trends, and measures event/festival impacts across major U.S. destinations.
+Our goal is to help tourism boards, hotels, travel agencies, and city planners make data-backed decisions on staffing, marketing, and promotions.
 
-Define business use-case: Tourism demand forecasting + Event/Festival impact analysis.
+The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy, Event Calendars) and provides interactive dashboards with real-time hotspot/off-season maps.
 
-Identify stakeholders: tourism boards, hotels, airlines, event organizers.
+## Key Features
+**Interactive Map (Plotly + Dash):** View current hotspots and off-season destinations.
+**Seasonality Insights:** Monthly visitor peaks, off-peak trends, and growth analysis.
+**Event Impact Metrics:** Quantify how festivals/events affect tourist inflows.
+**Cloud-Based Database:** PostgreSQL hosted on AWS RDS for scalable data handling.
+**PostgreSQL + PostGIS:** Geospatial queries and analytics for city/park mapping.
+**Scalable Architecture:** Modular ETL, containerized services, CI/CD ready.
+**Business Intelligence Dashboard:** KPIs, trend charts, and actionable insights.
+**Business Recommendations:** Insights panel suggesting promotion opportunities and fast-growing destinations.
 
-Gather requirements: Tech stack, budget (per request cost), cloud deployment feasibility.
+## Tech Stack
+Layer	Technology	Description
+**Language:**	Python (Pandas, NumPy, Scikit-learn) Core scripting
+**Data Processing:** Pandas, NumPy	Cleaning, merging, metric computation
+**Visualization:**	Plotly, Dash (interactive charts & maps).
+**Database:**	PostgreSQL Relational + geospatial queries
+**Cloud	AWS:** (RDS, S3, ECS)	Hosting, storage, compute
+**Infrastructure:** AWS (EC2 for app hosting, S3 for raw data).
+**Version Control:**	GitHub	Collaboration, issues, PRs
 
-## Phase 2 — Data Collection & Preparation
+## Frontend (and Fullstack UI)
+The frontend is a Dash app featuring:
+**Views Included:** 
+**Home Page (Interactive Map):** Choropleth map of U.S. destinations color-coded by lift % (Hotspot, Normal, Off-Season).
+**Filters:** Month, region, destination type, event category.
+**Seasonality Heatmaps:** High vs. low tourist months.
+**Drilldown View:** Destination-specific time series, seasonality heatmap, event impact cards.
+ **Event Impact Panel:** Spikes during festivals/events.  
+**Events Page:** Event list/calendar with links to affected destinations.
+ **Event Impact Panel:** Spikes during festivals/events.   Last update timestamps, missing data alerts.
 
-Collect datasets:Tourism data (visitors, hotel stays, flights).
+## Backend & Infrastructure
+**ETL Layer:** Python scripts running as ECS Tasks or Lambda jobs.
+**Database:** AWS RDS PostgreSQL (with PostGIS).
+**Storage:** AWS S3 buckets for raw, cleaned, and mart data.
+**Deployment:** ECS Fargate for Dash app; GitHub Actions.
 
-Event/Festival calendar (local + international).
+## Project Status
+In Progress (Data Track - Midterm Phase)
+Architecture finalized
+Data sources identified (TSA, NPS, Hotels, Events)
+ETL in development
+Initial dashboard
+Next: PostgreSQL setup and dataset cleaning.
+Event integration and map drilldowns.
 
-Weather, economic indicators (optional for enrichment).
+## Workload Distribution
+**Team Member	Responsibilities**
+ **Harika Sunkara:** Data pipeline, PostgreSQL schema, event analytics, EDA.
+ **Pranav Kumar K:**	Dashboard development (Dash/Plotly), Interactive maps, visualization integration.
+Both members collaborate on cloud deployment, testing, and final presentation.
 
-Preprocess:
+## Future Roadmap: Sprints / Phases
+**Phase	Week Deliverables**
+**Phase 1	(Week 2):**	Final architecture, schema design, seed data
+**Phase 2	(Week 3):**	Dataset collection, load TSA/NPS data into Postgres
+**Phase 3	(Week 4):**	data cleaning + processing
+**Phase 4	(Week 5):**	Integrate event datasets, event impact analytics (EDA + metrics)
+**Phase 5	(Week 6):**	Interactive map filters, drilldowns, QA dashboard
+**Phase 6	(Week 7):**	AWS deployment (EC2 + RDS), optimize performance, add documentation
+**Phase 7	(Week 8):**	Testing, Final demo, final report submission, presentation
 
-1)Handle missing values, duplicates.
+## How to Run the Project (Midterm Delivery)
+Prerequisites
+Python 3.10+
+PostgreSQL with PostGIS
+AWS credentials (for RDS/S3)
 
-2)Standardize formats (dates, city names).
+## Business Use Case
+Tourism boards businesses often lack real-time visibility into seasonality and event-driven demand spikes. This tool empowers decision-makers to:
+Allocate staffing during peak months.
+Launch promotions in off-season windows.
+Benchmark destinations by growth rate.
+Justify investments in infrastructure or marketing.
+Evaluate event ROI using impact analysis
+Identify fast-growing destinations for future opportunities.
+Strategize marketing campaigns around event-driven spikes.
 
-3)Create event-mapping table (city → event dates).
-
-## Phase 3 — Exploratory Data Analysis (EDA)
-
-Analyze historical trends (yearly/monthly growth).
-
-Detect seasonal peaks & off-peak months.
-
-Identify event-driven spikes in visitors.
-
-Visualize with line charts, heatmaps, bar plots.
-
-## Phase 4 — Modeling & Forecasting
-
-## Phase 5 — Data Pipeline & Cloud Deployment
-
-## Phase 6 — Visualization & Front-End
-
-Build dashboard
-
-Components:
-
-Time series trends (visitors by month).
-
-Event impact spikes (bar chart % increase).
-
-Seasonality heatmap (month vs year).
-
-Forecasts for next 12 months.
+## Authors & Acknowledgements
+**Authors**
+Harika Sunkara
+Pranav Kumar K
+ 
+ **Acknowledgements**
+Seidenberg School of Computer Science & Information Systems, Pace University.
+Capstone Professor for guidance and feedback.
