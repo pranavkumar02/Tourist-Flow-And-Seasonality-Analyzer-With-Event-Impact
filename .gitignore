@@ -1,0 +1,14 @@
+# Ignore environment and secrets
+.env
+
+# Ignore Python cache & virtual env
+__pycache__/
+*.pyc
+.venv/
+
+# Ignore OS files
+.DS_Store
+
+# Ignore data outputs if needed
+data/cleaned/
+data/mart/
