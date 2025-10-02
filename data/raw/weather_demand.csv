@@ -1,0 +1,29 @@
+City,State,Month,Season,AvgTemperatureF,WeatherCondition,DemandLevel,Reason
+Kerala,Kerala,1,Winter,78,Pleasant,High,Backwaters & houseboats peak season
+Kerala,Kerala,6,Monsoon,82,Rainy,Medium,Monsoon tourism & Ayurveda retreats
+Kerala,Kerala,9,Autumn,80,Pleasant,High,Post-monsoon greenery
+Ooty,Tamil Nadu,1,Winter,60,Cold,High,Hill station winter season
+Ooty,Tamil Nadu,5,Summer,70,Pleasant,High,Popular summer retreat
+Ooty,Tamil Nadu,8,Monsoon,68,Rainy,Low,Heavy rains limit activities
+Goa,Goa,1,Winter,77,Pleasant,High,Beach season & Christmas parties
+Goa,Goa,6,Monsoon,85,Rainy,Low,Off-season due to rains
+Goa,Goa,10,Autumn,80,Pleasant,High,Festivals & beach openings
+Manali,Himachal Pradesh,1,Winter,45,Cold,High,Snow tourism & honeymoon season
+Manali,Himachal Pradesh,6,Summer,68,Pleasant,High,Adventure sports
+Manali,Himachal Pradesh,8,Monsoon,72,Rainy,Low,Landslides & limited travel
+Jaipur,Rajasthan,1,Winter,65,Pleasant,High,Desert tourism comfort season
+Jaipur,Rajasthan,5,Summer,95,Hot,Low,Too hot for sightseeing
+Jaipur,Rajasthan,11,Autumn,78,Pleasant,High,Festival season (Diwali)
+Darjeeling,West Bengal,1,Winter,50,Cold,High,Clear mountain views
+Darjeeling,West Bengal,5,Summer,68,Pleasant,High,Hill station tourism
+Darjeeling,West Bengal,7,Monsoon,70,Rainy,Medium,Lush tea gardens
+Miami,Florida,1,Winter,70,Pleasant,High,Beach & cruise season
+Miami,Florida,7,Summer,87,Hot,Medium,Humid but busy season
+New York,New York,7,Summer,82,Hot,High,City tourism & festivals
+New York,New York,1,Winter,35,Cold,Medium,Holiday lights & shopping
+Seattle,Washington,6,Summer,68,Pleasant,High,Outdoor hiking & festivals
+Seattle,Washington,12,Winter,42,Cold,Low,Rainy off-season
+Los Angeles,California,7,Summer,84,Hot,High,Beach tourism & events
+Los Angeles,California,12,Winter,62,Pleasant,High,Year-round mild weather
+Yellowstone,Wyoming,7,Summer,75,Pleasant,High,Park open & wildlife spotting
+Yellowstone,Wyoming,1,Winter,30,Cold,Low,Closed roads & limited access

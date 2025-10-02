@@ -1,0 +1,61 @@
+City,Year,Month,OccupancyRate
+New York,2024,1,62
+New York,2024,2,65
+New York,2024,3,70
+New York,2024,4,74
+New York,2024,5,82
+New York,2024,6,88
+New York,2024,7,91
+New York,2024,8,89
+New York,2024,9,83
+New York,2024,10,78
+New York,2024,11,72
+New York,2024,12,75
+Los Angeles,2024,1,61
+Los Angeles,2024,2,64
+Los Angeles,2024,3,70
+Los Angeles,2024,4,76
+Los Angeles,2024,5,81
+Los Angeles,2024,6,85
+Los Angeles,2024,7,87
+Los Angeles,2024,8,86
+Los Angeles,2024,9,80
+Los Angeles,2024,10,74
+Los Angeles,2024,11,70
+Los Angeles,2024,12,73
+Miami,2024,1,78
+Miami,2024,2,80
+Miami,2024,3,82
+Miami,2024,4,84
+Miami,2024,5,85
+Miami,2024,6,87
+Miami,2024,7,88
+Miami,2024,8,86
+Miami,2024,9,81
+Miami,2024,10,78
+Miami,2024,11,75
+Miami,2024,12,79
+Chicago,2024,1,58
+Chicago,2024,2,60
+Chicago,2024,3,65
+Chicago,2024,4,70
+Chicago,2024,5,77
+Chicago,2024,6,82
+Chicago,2024,7,88
+Chicago,2024,8,84
+Chicago,2024,9,75
+Chicago,2024,10,70
+Chicago,2024,11,64
+Chicago,2024,12,68
+Seattle,2024,1,55
+Seattle,2024,2,58
+Seattle,2024,3,63
+Seattle,2024,4,68
+Seattle,2024,5,74
+Seattle,2024,6,80
+Seattle,2024,7,86
+Seattle,2024,8,83
+Seattle,2024,9,76
+Seattle,2024,10,70
+Seattle,2024,11,63
+Seattle,2024,12,60
