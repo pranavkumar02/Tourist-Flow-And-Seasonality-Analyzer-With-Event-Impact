@@ -31,7 +31,7 @@ Arizona,Southwest,Fall,High,Sep–Nov,Pleasant,Phoenix; Sedona,1900000
 
 North Carolina,Southeast,Winter,Medium,Dec–Feb,Cold in mountains,Asheville; Charlotte,1400000
 North Carolina,Southeast,Spring,High,Mar–May,Mild and floral,Great Smoky Mountains,2000000
-North Carolina,Southeast,Summer,High,Jun–Aug,Warm, beaches popular,Outer Banks; Asheville,2100000
+North Carolina,Southeast,Summer,High,Jun–Aug,"Warm, beaches popular",Outer Banks; Asheville,2100000
 North Carolina,Southeast,Fall,High,Sep–Nov,Beautiful foliage,Asheville; Smoky Mountains,2200000
 
 Nevada,West,Winter,High,Dec–Feb,Mild and sunny,Las Vegas; Reno,2100000
@@ -68,4 +68,5 @@ Massachusetts,Northeast,Winter,Medium,Dec–Feb,Cold with snow,Boston,1200000
 Massachusetts,Northeast,Spring,Medium,Mar–May,Cool and mild,Boston,1500000
 Massachusetts,Northeast,Summer,High,Jun–Aug,Warm,Boston; Cape Cod,2000000
 Massachusetts,Northeast,Fall,High,Sep–Nov,Colorful foliage,Boston,1900000
+
 
