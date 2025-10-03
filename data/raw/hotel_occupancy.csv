@@ -1,61 +1,91 @@
-City,Year,Month,OccupancyRate
-New York,2024,1,62
-New York,2024,2,65
-New York,2024,3,70
-New York,2024,4,74
-New York,2024,5,82
-New York,2024,6,88
-New York,2024,7,91
-New York,2024,8,89
-New York,2024,9,83
-New York,2024,10,78
-New York,2024,11,72
-New York,2024,12,75
-Los Angeles,2024,1,61
-Los Angeles,2024,2,64
-Los Angeles,2024,3,70
-Los Angeles,2024,4,76
-Los Angeles,2024,5,81
-Los Angeles,2024,6,85
-Los Angeles,2024,7,87
-Los Angeles,2024,8,86
-Los Angeles,2024,9,80
-Los Angeles,2024,10,74
-Los Angeles,2024,11,70
-Los Angeles,2024,12,73
-Miami,2024,1,78
-Miami,2024,2,80
-Miami,2024,3,82
-Miami,2024,4,84
-Miami,2024,5,85
-Miami,2024,6,87
-Miami,2024,7,88
-Miami,2024,8,86
-Miami,2024,9,81
-Miami,2024,10,78
-Miami,2024,11,75
-Miami,2024,12,79
-Chicago,2024,1,58
-Chicago,2024,2,60
-Chicago,2024,3,65
-Chicago,2024,4,70
-Chicago,2024,5,77
-Chicago,2024,6,82
-Chicago,2024,7,88
-Chicago,2024,8,84
-Chicago,2024,9,75
-Chicago,2024,10,70
-Chicago,2024,11,64
-Chicago,2024,12,68
-Seattle,2024,1,55
-Seattle,2024,2,58
-Seattle,2024,3,63
-Seattle,2024,4,68
-Seattle,2024,5,74
-Seattle,2024,6,80
-Seattle,2024,7,86
-Seattle,2024,8,83
-Seattle,2024,9,76
-Seattle,2024,10,70
-Seattle,2024,11,63
-Seattle,2024,12,60
+State,Month,Year,Avg_Occupancy_Rate,Avg_Daily_Rate_USD,RevPAR_USD,Season
+Wyoming,January,2024,48,125,60,Winter
+Wyoming,February,2024,50,130,65,Winter
+Wyoming,March,2024,55,135,74,Spring
+Wyoming,April,2024,58,140,81,Spring
+Wyoming,May,2024,65,145,94,Spring
+Wyoming,June,2024,78,150,117,Summer
+Wyoming,July,2024,82,155,127,Summer
+Wyoming,August,2024,80,150,120,Summer
+Wyoming,September,2024,70,145,102,Fall
+Wyoming,October,2024,62,140,87,Fall
+Wyoming,November,2024,55,135,74,Fall
+Wyoming,December,2024,50,130,65,Winter
+
+California,January,2024,55,160,88,Winter
+California,February,2024,57,165,94,Winter
+California,March,2024,62,170,105,Spring
+California,April,2024,68,175,119,Spring
+California,May,2024,75,180,135,Spring
+California,June,2024,85,185,157,Summer
+California,July,2024,88,190,167,Summer
+California,August,2024,87,185,161,Summer
+California,September,2024,80,180,144,Fall
+California,October,2024,70,175,123,Fall
+California,November,2024,63,170,107,Fall
+California,December,2024,58,165,96,Winter
+
+Arizona,January,2024,60,140,84,Winter
+Arizona,February,2024,62,145,90,Winter
+Arizona,March,2024,70,150,105,Spring
+Arizona,April,2024,75,155,116,Spring
+Arizona,May,2024,78,160,125,Spring
+Arizona,June,2024,82,165,135,Summer
+Arizona,July,2024,84,170,143,Summer
+Arizona,August,2024,83,165,137,Summer
+Arizona,September,2024,78,160,125,Fall
+Arizona,October,2024,70,155,109,Fall
+Arizona,November,2024,65,150,98,Fall
+Arizona,December,2024,62,145,90,Winter
+
+Utah,January,2024,45,120,54,Winter
+Utah,February,2024,48,125,60,Winter
+Utah,March,2024,55,130,72,Spring
+Utah,April,2024,60,135,81,Spring
+Utah,May,2024,68,140,95,Spring
+Utah,June,2024,75,145,109,Summer
+Utah,July,2024,80,150,120,Summer
+Utah,August,2024,78,150,117,Summer
+Utah,September,2024,72,145,104,Fall
+Utah,October,2024,64,140,90,Fall
+Utah,November,2024,58,135,78,Fall
+Utah,December,2024,52,130,68,Winter
+
+Colorado,January,2024,52,130,68,Winter
+Colorado,February,2024,54,135,73,Winter
+Colorado,March,2024,60,140,84,Spring
+Colorado,April,2024,65,145,94,Spring
+Colorado,May,2024,70,150,105,Spring
+Colorado,June,2024,78,155,121,Summer
+Colorado,July,2024,82,160,131,Summer
+Colorado,August,2024,80,160,128,Summer
+Colorado,September,2024,72,155,112,Fall
+Colorado,October,2024,65,150,98,Fall
+Colorado,November,2024,58,145,84,Fall
+Colorado,December,2024,54,140,76,Winter
+
+North Carolina,January,2024,50,120,60,Winter
+North Carolina,February,2024,52,125,65,Winter
+North Carolina,March,2024,58,130,75,Spring
+North Carolina,April,2024,65,135,88,Spring
+North Carolina,May,2024,70,140,98,Spring
+North Carolina,June,2024,78,145,113,Summer
+North Carolina,July,2024,82,150,123,Summer
+North Carolina,August,2024,81,150,122,Summer
+North Carolina,September,2024,75,145,109,Fall
+North Carolina,October,2024,68,140,95,Fall
+North Carolina,November,2024,60,135,81,Fall
+North Carolina,December,2024,55,130,72,Winter
+
+Florida,January,2024,65,150,98,Winter
+Florida,February,2024,68,155,105,Winter
+Florida,March,2024,75,160,120,Spring
+Florida,April,2024,80,165,132,Spring
+Florida,May,2024,85,170,145,Spring
+Florida,June,2024,88,175,154,Summer
+Florida,July,2024,90,180,162,Summer
+Florida,August,2024,89,180,160,Summer
+Florida,September,2024,85,175,149,Fall
+Florida,October,2024,78,170,133,Fall
+Florida,November,2024,72,165,119,Fall
+Florida,December,2024,68,160,109,Winter
