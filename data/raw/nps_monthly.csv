@@ -1,61 +1,91 @@
-ParkCode,ParkName,Year,Month,Visitors
-YOSE,Yosemite National Park,2024,1,150000
-YOSE,Yosemite National Park,2024,2,160000
-YOSE,Yosemite National Park,2024,3,180000
-YOSE,Yosemite National Park,2024,4,220000
-YOSE,Yosemite National Park,2024,5,260000
-YOSE,Yosemite National Park,2024,6,320000
-YOSE,Yosemite National Park,2024,7,370000
-YOSE,Yosemite National Park,2024,8,365000
-YOSE,Yosemite National Park,2024,9,290000
-YOSE,Yosemite National Park,2024,10,220000
-YOSE,Yosemite National Park,2024,11,170000
-YOSE,Yosemite National Park,2024,12,160000
-GRCA,Grand Canyon National Park,2024,1,120000
-GRCA,Grand Canyon National Park,2024,2,125000
-GRCA,Grand Canyon National Park,2024,3,150000
-GRCA,Grand Canyon National Park,2024,4,190000
-GRCA,Grand Canyon National Park,2024,5,230000
-GRCA,Grand Canyon National Park,2024,6,280000
-GRCA,Grand Canyon National Park,2024,7,340000
-GRCA,Grand Canyon National Park,2024,8,330000
-GRCA,Grand Canyon National Park,2024,9,270000
-GRCA,Grand Canyon National Park,2024,10,200000
-GRCA,Grand Canyon National Park,2024,11,150000
-GRCA,Grand Canyon National Park,2024,12,130000
-ZION,Zion National Park,2024,1,95000
-ZION,Zion National Park,2024,2,105000
-ZION,Zion National Park,2024,3,140000
-ZION,Zion National Park,2024,4,170000
-ZION,Zion National Park,2024,5,210000
-ZION,Zion National Park,2024,6,250000
-ZION,Zion National Park,2024,7,300000
-ZION,Zion National Park,2024,8,295000
-ZION,Zion National Park,2024,9,260000
-ZION,Zion National Park,2024,10,190000
-ZION,Zion National Park,2024,11,150000
-ZION,Zion National Park,2024,12,130000
-YELL,Yellowstone National Park,2024,1,100000
-YELL,Yellowstone National Park,2024,2,110000
-YELL,Yellowstone National Park,2024,3,130000
-YELL,Yellowstone National Park,2024,4,180000
-YELL,Yellowstone National Park,2024,5,250000
-YELL,Yellowstone National Park,2024,6,350000
-YELL,Yellowstone National Park,2024,7,400000
-YELL,Yellowstone National Park,2024,8,390000
-YELL,Yellowstone National Park,2024,9,300000
-YELL,Yellowstone National Park,2024,10,220000
-YELL,Yellowstone National Park,2024,11,140000
-YELL,Yellowstone National Park,2024,12,110000
-GLAC,Glacier National Park,2024,1,90000
-GLAC,Glacier National Park,2024,2,95000
-GLAC,Glacier National Park,2024,3,120000
-GLAC,Glacier National Park,2024,4,160000
-GLAC,Glacier National Park,2024,5,210000
-GLAC,Glacier National Park,2024,6,300000
-GLAC,Glacier National Park,2024,7,360000
-GLAC,Glacier National Park,2024,8,355000
-GLAC,Glacier National Park,2024,9,270000
-GLAC,Glacier National Park,2024,10,190000
-GLAC,Glacier National Park,2024,11,130000
-GLAC,Glacier National Park,2024,12,100000
+Park_Name,State,Month,Year,Visitors,Season
+Yellowstone National Park,Wyoming,January,2024,85000,Winter
+Yellowstone National Park,Wyoming,February,2024,92000,Winter
+Yellowstone National Park,Wyoming,March,2024,115000,Spring
+Yellowstone National Park,Wyoming,April,2024,165000,Spring
+Yellowstone National Park,Wyoming,May,2024,220000,Spring
+Yellowstone National Park,Wyoming,June,2024,420000,Summer
+Yellowstone National Park,Wyoming,July,2024,480000,Summer
+Yellowstone National Park,Wyoming,August,2024,460000,Summer
+Yellowstone National Park,Wyoming,September,2024,350000,Fall
+Yellowstone National Park,Wyoming,October,2024,210000,Fall
+Yellowstone National Park,Wyoming,November,2024,120000,Fall
+Yellowstone National Park,Wyoming,December,2024,95000,Winter
+
+Yosemite National Park,California,January,2024,60000,Winter
+Yosemite National Park,California,February,2024,75000,Winter
+Yosemite National Park,California,March,2024,130000,Spring
+Yosemite National Park,California,April,2024,220000,Spring
+Yosemite National Park,California,May,2024,350000,Spring
+Yosemite National Park,California,June,2024,480000,Summer
+Yosemite National Park,California,July,2024,500000,Summer
+Yosemite National Park,California,August,2024,490000,Summer
+Yosemite National Park,California,September,2024,370000,Fall
+Yosemite National Park,California,October,2024,220000,Fall
+Yosemite National Park,California,November,2024,130000,Fall
+Yosemite National Park,California,December,2024,85000,Winter
+
+Grand Canyon National Park,Arizona,January,2024,95000,Winter
+Grand Canyon National Park,Arizona,February,2024,110000,Winter
+Grand Canyon National Park,Arizona,March,2024,220000,Spring
+Grand Canyon National Park,Arizona,April,2024,300000,Spring
+Grand Canyon National Park,Arizona,May,2024,420000,Spring
+Grand Canyon National Park,Arizona,June,2024,480000,Summer
+Grand Canyon National Park,Arizona,July,2024,520000,Summer
+Grand Canyon National Park,Arizona,August,2024,500000,Summer
+Grand Canyon National Park,Arizona,September,2024,420000,Fall
+Grand Canyon National Park,Arizona,October,2024,320000,Fall
+Grand Canyon National Park,Arizona,November,2024,200000,Fall
+Grand Canyon National Park,Arizona,December,2024,120000,Winter
+
+Zion National Park,Utah,January,2024,40000,Winter
+Zion National Park,Utah,February,2024,45000,Winter
+Zion National Park,Utah,March,2024,95000,Spring
+Zion National Park,Utah,April,2024,180000,Spring
+Zion National Park,Utah,May,2024,250000,Spring
+Zion National Park,Utah,June,2024,350000,Summer
+Zion National Park,Utah,July,2024,370000,Summer
+Zion National Park,Utah,August,2024,360000,Summer
+Zion National Park,Utah,September,2024,300000,Fall
+Zion National Park,Utah,October,2024,200000,Fall
+Zion National Park,Utah,November,2024,120000,Fall
+Zion National Park,Utah,December,2024,70000,Winter
+
+Rocky Mountain National Park,Colorado,January,2024,55000,Winter
+Rocky Mountain National Park,Colorado,February,2024,60000,Winter
+Rocky Mountain National Park,Colorado,March,2024,95000,Spring
+Rocky Mountain National Park,Colorado,April,2024,180000,Spring
+Rocky Mountain National Park,Colorado,May,2024,250000,Spring
+Rocky Mountain National Park,Colorado,June,2024,400000,Summer
+Rocky Mountain National Park,Colorado,July,2024,430000,Summer
+Rocky Mountain National Park,Colorado,August,2024,420000,Summer
+Rocky Mountain National Park,Colorado,September,2024,300000,Fall
+Rocky Mountain National Park,Colorado,October,2024,180000,Fall
+Rocky Mountain National Park,Colorado,November,2024,95000,Fall
+Rocky Mountain National Park,Colorado,December,2024,70000,Winter
+
+Great Smoky Mountains,North Carolina,January,2024,120000,Winter
+Great Smoky Mountains,North Carolina,February,2024,130000,Winter
+Great Smoky Mountains,North Carolina,March,2024,200000,Spring
+Great Smoky Mountains,North Carolina,April,2024,350000,Spring
+Great Smoky Mountains,North Carolina,May,2024,420000,Spring
+Great Smoky Mountains,North Carolina,June,2024,500000,Summer
+Great Smoky Mountains,North Carolina,July,2024,520000,Summer
+Great Smoky Mountains,North Carolina,August,2024,510000,Summer
+Great Smoky Mountains,North Carolina,September,2024,400000,Fall
+Great Smoky Mountains,North Carolina,October,2024,250000,Fall
+Great Smoky Mountains,North Carolina,November,2024,180000,Fall
+Great Smoky Mountains,North Carolina,December,2024,130000,Winter
+
+Everglades National Park,Florida,January,2024,150000,Winter
+Everglades National Park,Florida,February,2024,170000,Winter
+Everglades National Park,Florida,March,2024,200000,Spring
+Everglades National Park,Florida,April,2024,220000,Spring
+Everglades National Park,Florida,May,2024,210000,Spring
+Everglades National Park,Florida,June,2024,190000,Summer
+Everglades National Park,Florida,July,2024,185000,Summer
+Everglades National Park,Florida,August,2024,180000,Summer
+Everglades National Park,Florida,September,2024,175000,Fall
+Everglades National Park,Florida,October,2024,180000,Fall
+Everglades National Park,Florida,November,2024,190000,Fall
+Everglades National Park,Florida,December,2024,200000,Winter
