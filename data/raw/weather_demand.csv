@@ -47,7 +47,7 @@ Louisiana,South,Fall,High,Sep–Nov,Comfortable,New Orleans,1900000
 Wyoming,Mountain,Winter,Low,Dec–Feb,Very cold and snowy,Yellowstone; Jackson Hole,900000
 Wyoming,Mountain,Spring,Medium,Mar–May,Chilly then warming,Yellowstone,1200000
 Wyoming,Mountain,Summer,High,Jun–Aug,Pleasant outdoors,Yellowstone NP,2000000
-Wyoming,Mountain,Fall,High,Sep–Nov,Cool, scenic drives,Yellowstone,1600000
+Wyoming,Mountain,Fall,High,Sep–Nov,"Cool, scenic drives",Yellowstone,1600000
 
 Utah,Mountain,Winter,Medium,Dec–Feb,Snowy and cold,Park City,1200000
 Utah,Mountain,Spring,High,Mar–May,Mild and sunny,Zion NP,1500000
@@ -68,5 +68,6 @@ Massachusetts,Northeast,Winter,Medium,Dec–Feb,Cold with snow,Boston,1200000
 Massachusetts,Northeast,Spring,Medium,Mar–May,Cool and mild,Boston,1500000
 Massachusetts,Northeast,Summer,High,Jun–Aug,Warm,Boston; Cape Cod,2000000
 Massachusetts,Northeast,Fall,High,Sep–Nov,Colorful foliage,Boston,1900000
+
 
 
