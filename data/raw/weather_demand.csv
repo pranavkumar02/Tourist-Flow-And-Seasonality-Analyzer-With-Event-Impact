@@ -14,7 +14,7 @@ New York,Northeast,Spring,Medium,Mar–May,Cool with rain,Albany; Niagara,180000
 New York,Northeast,Summer,High,Jun–Aug,Warm and sunny,NYC; Long Island,2700000
 New York,Northeast,Fall,High,Sep–Nov,Colorful foliage,Adirondacks; Hudson Valley,2900000
 
-Colorado,Mountain,Winter,High,Dec–Feb,Snowy, ideal for skiing,Aspen; Vail; Denver,2200000
+Colorado,Mountain,Winter,High,Dec–Feb,"Snowy, ideal for skiing",Aspen; Vail; Denver,2200000
 Colorado,Mountain,Spring,Medium,Mar–May,Chilly to mild,Denver; Boulder,1500000
 Colorado,Mountain,Summer,High,Jun–Aug,Pleasant mountains,Aspen; Estes Park,2400000
 Colorado,Mountain,Fall,High,Sep–Nov,Cool and scenic,Rocky Mountain NP,2100000
@@ -68,3 +68,4 @@ Massachusetts,Northeast,Winter,Medium,Dec–Feb,Cold with snow,Boston,1200000
 Massachusetts,Northeast,Spring,Medium,Mar–May,Cool and mild,Boston,1500000
 Massachusetts,Northeast,Summer,High,Jun–Aug,Warm,Boston; Cape Cod,2000000
 Massachusetts,Northeast,Fall,High,Sep–Nov,Colorful foliage,Boston,1900000
+
