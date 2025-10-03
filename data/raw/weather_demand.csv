@@ -1,29 +1,70 @@
-City,State,Month,Season,AvgTemperatureF,WeatherCondition,DemandLevel,Reason
-Kerala,Kerala,1,Winter,78,Pleasant,High,Backwaters & houseboats peak season
-Kerala,Kerala,6,Monsoon,82,Rainy,Medium,Monsoon tourism & Ayurveda retreats
-Kerala,Kerala,9,Autumn,80,Pleasant,High,Post-monsoon greenery
-Ooty,Tamil Nadu,1,Winter,60,Cold,High,Hill station winter season
-Ooty,Tamil Nadu,5,Summer,70,Pleasant,High,Popular summer retreat
-Ooty,Tamil Nadu,8,Monsoon,68,Rainy,Low,Heavy rains limit activities
-Goa,Goa,1,Winter,77,Pleasant,High,Beach season & Christmas parties
-Goa,Goa,6,Monsoon,85,Rainy,Low,Off-season due to rains
-Goa,Goa,10,Autumn,80,Pleasant,High,Festivals & beach openings
-Manali,Himachal Pradesh,1,Winter,45,Cold,High,Snow tourism & honeymoon season
-Manali,Himachal Pradesh,6,Summer,68,Pleasant,High,Adventure sports
-Manali,Himachal Pradesh,8,Monsoon,72,Rainy,Low,Landslides & limited travel
-Jaipur,Rajasthan,1,Winter,65,Pleasant,High,Desert tourism comfort season
-Jaipur,Rajasthan,5,Summer,95,Hot,Low,Too hot for sightseeing
-Jaipur,Rajasthan,11,Autumn,78,Pleasant,High,Festival season (Diwali)
-Darjeeling,West Bengal,1,Winter,50,Cold,High,Clear mountain views
-Darjeeling,West Bengal,5,Summer,68,Pleasant,High,Hill station tourism
-Darjeeling,West Bengal,7,Monsoon,70,Rainy,Medium,Lush tea gardens
-Miami,Florida,1,Winter,70,Pleasant,High,Beach & cruise season
-Miami,Florida,7,Summer,87,Hot,Medium,Humid but busy season
-New York,New York,7,Summer,82,Hot,High,City tourism & festivals
-New York,New York,1,Winter,35,Cold,Medium,Holiday lights & shopping
-Seattle,Washington,6,Summer,68,Pleasant,High,Outdoor hiking & festivals
-Seattle,Washington,12,Winter,42,Cold,Low,Rainy off-season
-Los Angeles,California,7,Summer,84,Hot,High,Beach tourism & events
-Los Angeles,California,12,Winter,62,Pleasant,High,Year-round mild weather
-Yellowstone,Wyoming,7,Summer,75,Pleasant,High,Park open & wildlife spotting
-Yellowstone,Wyoming,1,Winter,30,Cold,Low,Closed roads & limited access
+State,Region,Season,Demand_Level,Ideal_Months,Weather_Description,Top_Destinations,Avg_Visitors
+Florida,Southeast,Winter,High,Dec–Feb,Warm and sunny,Miami; Orlando; Key West,2500000
+Florida,Southeast,Spring,High,Mar–May,Pleasant with light showers,Naples; Tampa; Miami,2400000
+Florida,Southeast,Summer,Medium,Jun–Aug,Hot and humid,Orlando; Tampa,2000000
+Florida,Southeast,Fall,High,Sep–Nov,Warm breeze,Key West; Miami,2300000
+
+California,West,Winter,Medium,Dec–Feb,Cool and mild,San Francisco; LA; Yosemite,1800000
+California,West,Spring,High,Mar–May,Sunny and dry,San Diego; Napa; LA,2500000
+California,West,Summer,High,Jun–Aug,Warm coastal breeze,San Diego; Malibu; Yosemite,2700000
+California,West,Fall,High,Sep–Nov,Pleasant and dry,Napa; Santa Barbara,2600000
+
+New York,Northeast,Winter,High,Dec–Feb,Cold and festive,New York City; Niagara,3000000
+New York,Northeast,Spring,Medium,Mar–May,Cool with rain,Albany; Niagara,1800000
+New York,Northeast,Summer,High,Jun–Aug,Warm and sunny,NYC; Long Island,2700000
+New York,Northeast,Fall,High,Sep–Nov,Colorful foliage,Adirondacks; Hudson Valley,2900000
+
+Colorado,Mountain,Winter,High,Dec–Feb,Snowy, ideal for skiing,Aspen; Vail; Denver,2200000
+Colorado,Mountain,Spring,Medium,Mar–May,Chilly to mild,Denver; Boulder,1500000
+Colorado,Mountain,Summer,High,Jun–Aug,Pleasant mountains,Aspen; Estes Park,2400000
+Colorado,Mountain,Fall,High,Sep–Nov,Cool and scenic,Rocky Mountain NP,2100000
+
+Texas,South,Winter,Medium,Dec–Feb,Cool and dry,Austin; San Antonio,1700000
+Texas,South,Spring,High,Mar–May,Warm and sunny,Austin; Houston,2200000
+Texas,South,Summer,Medium,Jun–Aug,Hot and humid,Dallas; Houston,1800000
+Texas,South,Fall,High,Sep–Nov,Comfortable,Austin; Dallas,2100000
+
+Arizona,Southwest,Winter,High,Dec–Feb,Mild desert climate,Phoenix; Sedona,2000000
+Arizona,Southwest,Spring,High,Mar–May,Warm and clear,Phoenix; Tucson,2300000
+Arizona,Southwest,Summer,Medium,Jun–Aug,Very hot,Phoenix; Grand Canyon,1600000
+Arizona,Southwest,Fall,High,Sep–Nov,Pleasant,Phoenix; Sedona,1900000
+
+North Carolina,Southeast,Winter,Medium,Dec–Feb,Cold in mountains,Asheville; Charlotte,1400000
+North Carolina,Southeast,Spring,High,Mar–May,Mild and floral,Great Smoky Mountains,2000000
+North Carolina,Southeast,Summer,High,Jun–Aug,Warm, beaches popular,Outer Banks; Asheville,2100000
+North Carolina,Southeast,Fall,High,Sep–Nov,Beautiful foliage,Asheville; Smoky Mountains,2200000
+
+Nevada,West,Winter,High,Dec–Feb,Mild and sunny,Las Vegas; Reno,2100000
+Nevada,West,Spring,High,Mar–May,Comfortable weather,Las Vegas,2200000
+Nevada,West,Summer,Medium,Jun–Aug,Hot and dry,Las Vegas,2000000
+Nevada,West,Fall,High,Sep–Nov,Pleasant desert climate,Las Vegas,2300000
+
+Louisiana,South,Winter,Medium,Dec–Feb,Cool and humid,New Orleans,1500000
+Louisiana,South,Spring,High,Mar–May,Warm and vibrant,New Orleans; Baton Rouge,2000000
+Louisiana,South,Summer,Medium,Jun–Aug,Hot and humid,New Orleans,1700000
+Louisiana,South,Fall,High,Sep–Nov,Comfortable,New Orleans,1900000
+
+Wyoming,Mountain,Winter,Low,Dec–Feb,Very cold and snowy,Yellowstone; Jackson Hole,900000
+Wyoming,Mountain,Spring,Medium,Mar–May,Chilly then warming,Yellowstone,1200000
+Wyoming,Mountain,Summer,High,Jun–Aug,Pleasant outdoors,Yellowstone NP,2000000
+Wyoming,Mountain,Fall,High,Sep–Nov,Cool, scenic drives,Yellowstone,1600000
+
+Utah,Mountain,Winter,Medium,Dec–Feb,Snowy and cold,Park City,1200000
+Utah,Mountain,Spring,High,Mar–May,Mild and sunny,Zion NP,1500000
+Utah,Mountain,Summer,High,Jun–Aug,Warm and dry,Zion; Bryce Canyon,1700000
+Utah,Mountain,Fall,High,Sep–Nov,Cool and scenic,Arches NP,1600000
+
+Oregon,West,Winter,Low,Dec–Feb,Rainy and cold,Portland,1000000
+Oregon,West,Spring,Medium,Mar–May,Cool with blossoms,Portland,1400000
+Oregon,West,Summer,High,Jun–Aug,Warm and dry,Crater Lake; Portland,1900000
+Oregon,West,Fall,Medium,Sep–Nov,Cool breeze,Portland,1600000
+
+Illinois,Midwest,Winter,Medium,Dec–Feb,Cold and windy,Chicago,1300000
+Illinois,Midwest,Spring,High,Mar–May,Mild weather,Chicago,1800000
+Illinois,Midwest,Summer,High,Jun–Aug,Warm and festive,Chicago,2000000
+Illinois,Midwest,Fall,High,Sep–Nov,Cool and colorful,Chicago,1900000
+
+Massachusetts,Northeast,Winter,Medium,Dec–Feb,Cold with snow,Boston,1200000
+Massachusetts,Northeast,Spring,Medium,Mar–May,Cool and mild,Boston,1500000
+Massachusetts,Northeast,Summer,High,Jun–Aug,Warm,Boston; Cape Cod,2000000
+Massachusetts,Northeast,Fall,High,Sep–Nov,Colorful foliage,Boston,1900000
