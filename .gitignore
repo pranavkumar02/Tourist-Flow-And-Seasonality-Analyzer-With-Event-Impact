@@ -10,3 +10,5 @@ notebooks/.ipynb_checkpoints/
 # Ignore raw / cleaned data
 data/raw/
 data/cleaned/
+
+assets/
