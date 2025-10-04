@@ -155,7 +155,7 @@ Harika Sunkara
 Pranav Kumar K
 
 
-## 🗓 Weekly Progress Reports
+## Weekly Progress Reports
 - [Week 2 Progress (Notion)] - https://www.notion.so/Tourist-Flow-Seasonality-Analyzer-27b8d2f849ec8065b499c5b8b4914d89?source=copy_link
  
  **Acknowledgements**
