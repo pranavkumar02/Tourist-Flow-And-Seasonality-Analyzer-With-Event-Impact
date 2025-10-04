@@ -1,1 +1,6 @@
-
+pandas
+numpy
+plotly
+dash
+jupyter
+python-dotenv
