@@ -1,14 +1,12 @@
-# Ignore environment and secrets
+# Ignore virtual environment
+venv/
+
+# Ignore environment secrets
 .env
 
-# Ignore Python cache & virtual env
-__pycache__/
-*.pyc
-.venv/
+# Ignore temp checkpoints
+notebooks/.ipynb_checkpoints/
 
-# Ignore OS files
-.DS_Store
-
-# Ignore data outputs if needed
+# Ignore raw / cleaned data
+data/raw/
 data/cleaned/
-data/mart/
