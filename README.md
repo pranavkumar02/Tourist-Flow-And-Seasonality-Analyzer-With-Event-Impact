@@ -106,7 +106,7 @@ Both members collaborate on cloud deployment, testing, and final presentation.
 
 **Phase 2	(Week 3):**	Dataset collection, load TSA/NPS data into Postgres.
 
-**Phase 3	(Week 4):**	data cleaning + processing.
+**Phase 3	(Week 4):**	data cleaning + processing, Backend Process
 
 **Phase 4	(Week 5):**	Integrate event datasets, event impact analytics (EDA + metrics).
 
@@ -152,6 +152,7 @@ Strategize marketing campaigns around event-driven spikes.
 **Authors**
 
 Harika Sunkara
+
 Pranav Kumar K
 
 
