@@ -13,4 +13,3 @@ def get_engine():
 
     url = f"postgresql+psycopg2://{user}:{pwd}@{host}:{port}/{db}"
     return create_engine(url, future=True)
-
