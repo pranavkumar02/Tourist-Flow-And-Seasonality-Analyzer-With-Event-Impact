@@ -1,1 +1,521 @@
-
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "private_outputs": true,
+      "provenance": [],
+      "mount_file_id": "1phdxbf15e3eILx2dYbrStnfLdcc5FEbU",
+      "authorship_tag": "ABX9TyP1UBLCOHWqcDViT5wPjNKK",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/pranavkumar02/Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact/blob/pranavkumar02-patch-1/notebooks\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "dhBi6aVXqHZy"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import plotly.express as px"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df=pd.read_csv('/content/drive/MyDrive/final_dataset.csv')"
+      ],
+      "metadata": {
+        "id": "_sJczvpLqWZf"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Creating new dataframe based on the original dataframe where we retain only one row per tourist attraction so we can work on catogorical visualizations(ie no of attractions per park type,state,region)"
+      ],
+      "metadata": {
+        "id": "qrc4A-9B9bXA"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df_parks = df.drop_duplicates(subset=['Park'])"
+      ],
+      "metadata": {
+        "id": "QZuT8Fu1SKc_"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def park_type_count(df):\n",
+        " park_type_counts = df_parks['Park Type'].value_counts().reset_index()\n",
+        " park_type_counts.columns = ['Park Type','Unique Count']\n",
+        " fig = px.bar(park_type_counts,x='Park Type',y='Unique Count',color='Park Type',title='Unique Records per Park Type',text='Unique Count')\n",
+        " fig.update_layout(xaxis_title='Park Type',yaxis_title='Number of Unique Records',showlegend=False,title_x=0.5)\n",
+        " fig.update_traces(textposition='outside')\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "oXXfB_qAIZK9"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def state_counts(df):\n",
+        "  state_counts = df['State'].value_counts().reset_index()\n",
+        "  state_counts.columns = ['State','Unique Count']\n",
+        "  fig=px.bar(state_counts,x='State',y='Unique Count',color='State',title='Unique Records per State',text='Unique Count')\n",
+        "  fig.update_layout(xaxis_title='State',yaxis_title='Number of Unique Records',showlegend=False,title_x=0.5)\n",
+        "  fig.update_traces(textposition='outside')\n",
+        "  return fig.show()"
+      ],
+      "metadata": {
+        "id": "bl2xF73H-2O0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def region_counts(df):\n",
+        "  region_counts = df['Region'].value_counts().reset_index()\n",
+        "  region_counts.columns = ['Region','Unique Count']\n",
+        "  fig=px.bar(region_counts,x='Region',y='Unique Count',color='Region',title='Unique Records per Region',text='Unique Count')\n",
+        "  fig.update_layout(xaxis_title='Region',yaxis_title='Number of Unique Records',showlegend=False,title_x=0.5)\n",
+        "  fig.update_traces(textposition='outside')\n",
+        "  return fig.show()"
+      ],
+      "metadata": {
+        "id": "THOhk7tM_AM7"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "park_type_count(df_parks)"
+      ],
+      "metadata": {
+        "id": "mC-X9-0G-v5w"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "state_counts(df_parks)"
+      ],
+      "metadata": {
+        "id": "TlWIUgES-582"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "region_counts(df_parks)"
+      ],
+      "metadata": {
+        "id": "ciIOo7YV_Dlg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def total_visitors_Park(df):\n",
+        " total_visits = df.groupby('Park')['Recreation Visits'].sum().reset_index().sort_values('Recreation Visits', ascending=False)\n",
+        " fig= px.bar(total_visits.head(15), x='Park', y='Recreation Visits', title='Top 15 Parks by Total Visits')\n",
+        " fig.update_layout(xaxis_title='Park',yaxis_title='Total Visits',showlegend=False,title_x=0.5)\n",
+        " fig.update_traces(textposition='outside')\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "LvKpa1N_TKkM"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def yearly_visitors(df):\n",
+        "  yearly_vistors=df.groupby(['Year'])['Recreation Visits'].sum().reset_index().sort_values(by='Year',ascending=False)\n",
+        "  fig=px.bar(yearly_vistors,x='Year',y='Recreation Visits',title='Yearly Recreation Visits',text='Recreation Visits')\n",
+        "  fig.update_layout(xaxis_title='Year',yaxis_title='Recreation Visits',showlegend=False,title_x=0.5)\n",
+        "  fig.update_traces(textposition='outside')\n",
+        "  return fig.show()"
+      ],
+      "metadata": {
+        "id": "FFVX5WVi_PqI"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def monthly_visitors(df,years_to_include=None):\n",
+        "  monthly_vistors=df.groupby(['Month','Year'])['Recreation Visits'].sum().reset_index().sort_values(by=['Month','Year'],\n",
+        "                                                                                                    ascending=[True,True])\n",
+        "  if years_to_include is not None:\n",
+        "    monthly_vistors=monthly_vistors[monthly_vistors['Year'].isin(years_to_include)]\n",
+        "  month_names = {1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun',7:'Jul', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}\n",
+        "  monthly_vistors['Month'] = monthly_vistors['Month'].map(month_names)\n",
+        "  fig=px.line(monthly_vistors,x='Month',y='Recreation Visits',color='Year',title='Monthly Recreation Visits',markers=True)\n",
+        "  fig.update_layout(xaxis_title='Month',yaxis_title='Recreation Visits',showlegend=False,title_x=0.5)\n",
+        "  return fig.show()\n"
+      ],
+      "metadata": {
+        "id": "fep436EJ_anC"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def top_parks(df):\n",
+        " top = (df.groupby(['Year','Park'])['Recreation Visits'].sum().reset_index().sort_values(['Year','Recreation Visits'],\n",
+        "                                                                     ascending=[True, False]).groupby('Year').head(5))\n",
+        " fig = px.bar(top,x='Year',y='Recreation Visits',color='Park',barmode='group',title='Top 5 Parks per Year')\n",
+        " fig.update_layout(xaxis_title='Year',yaxis_title='Recreation Visits',legend_title='Park',width=1200,bargap=0.05,bargroupgap=0.05)\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "i2i0tWniT6ll"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def top_states(df):\n",
+        " top = (df.groupby(['Year','State'])['Recreation Visits'].sum().reset_index().sort_values(['Year','Recreation Visits'],\n",
+        "                                                                     ascending=[True, False]).groupby('Year').head(5))\n",
+        " fig = px.bar(top,x='Year',y='Recreation Visits',color='State',barmode='group',title='Top 5 States per Year')\n",
+        " fig.update_layout(xaxis_title='Year',yaxis_title='Recreation Visits',legend_title='State',width=1200,bargap=0.05,bargroupgap=0.05)\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "AVjoQT-4iT-z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "top_parks(df)"
+      ],
+      "metadata": {
+        "id": "mCROweEbbP0z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "top_states(df)"
+      ],
+      "metadata": {
+        "id": "MboLm6GUigOi"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "total_visitors_Park(df)"
+      ],
+      "metadata": {
+        "id": "NPehOOAfTbfX"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "yearly_visitors(df)"
+      ],
+      "metadata": {
+        "id": "6-JWku3KDuN5"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "monthly_visitors(df)"
+      ],
+      "metadata": {
+        "id": "fWHyNi3q_eoH"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def visitors_region(df):\n",
+        " df['YearMonth'] = pd.to_datetime(df['Year'].astype(str) + \"-\" + df['Month'].astype(str).str.zfill(2) + \"-01\")\n",
+        " monthly_region=df.groupby(['Region','YearMonth'])['Recreation Visits'].sum().reset_index().sort_values(by=['Region','YearMonth'],ascending=False)\n",
+        " regions = monthly_region['Region'].unique().tolist()\n",
+        " full_idx = pd.date_range(start=monthly_region['YearMonth'].min(),end=monthly_region['YearMonth'].max(),freq='MS')\n",
+        " all_combinations = pd.MultiIndex.from_product([regions, full_idx],names=['Region','YearMonth'])\n",
+        " complete = monthly_region.set_index(['Region','YearMonth']).reindex(all_combinations,fill_value=0).reset_index()\n",
+        " complete = complete.sort_values(['Region','YearMonth'])\n",
+        " complete['Visits_3mo'] = complete.groupby('Region')['Recreation Visits'].transform(lambda s: s.rolling(3, min_periods=1).sum())\n",
+        " fig_line = px.line(complete,x='YearMonth',y='Visits_3mo',color='Region',title='3-month Rolling Total Recreation Visits by Region',labels={'Visits_3mo':'3-month Total Visits', 'YearMonth':'Month'})\n",
+        " fig_line.update_layout(xaxis=dict(rangeselector=dict(buttons=list([dict(count=12, label=\"1y\", step=\"month\", stepmode=\"backward\"),dict(count=24, label=\"2y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(count=36, label=\"3y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(step=\"all\")])), rangeslider=dict(visible=True), type=\"date\"),legend_title_text='Region',title_x=0.5)\n",
+        " return fig_line.show()"
+      ],
+      "metadata": {
+        "id": "feXk9SMpNYNr"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def visitors_park(df,parks_to_include=None):\n",
+        "  df['YearMonth'] = pd.to_datetime(df['Year'].astype(str) + \"-\" + df['Month'].astype(str).str.zfill(2) + \"-01\")\n",
+        "  monthly_park=df.groupby(['Park','YearMonth'])['Recreation Visits'].sum().reset_index().sort_values(by=['Park','YearMonth'],ascending=False)\n",
+        "  if parks_to_include is not None:\n",
+        "   monthly_park = monthly_park[monthly_park['Park'].isin(parks_to_include)]\n",
+        "  parks = monthly_park['Park'].unique().tolist()\n",
+        "  full_idx = pd.date_range(start=monthly_park['YearMonth'].min(),end=monthly_park['YearMonth'].max(),freq='MS')\n",
+        "  all_combinations = pd.MultiIndex.from_product([parks, full_idx],names=['Park','YearMonth'])\n",
+        "  complete = monthly_park.set_index(['Park','YearMonth']).reindex(all_combinations,fill_value=0).reset_index()\n",
+        "  complete = complete.sort_values(['Park','YearMonth'])\n",
+        "  complete['Visits_3mo'] = complete.groupby('Park')['Recreation Visits'].transform(lambda s: s.rolling(3, min_periods=1).sum())\n",
+        "  fig_line = px.line(complete,x='YearMonth',y='Visits_3mo',color='Park',title='3-month Rolling Total Recreation Visits by Park',labels={'Visits_3mo':'3-month Total Visits','YearMonth':'Month-Year'})\n",
+        "  fig_line.update_layout(xaxis=dict(rangeselector=dict(buttons=list([dict(count=12, label=\"1y\", step=\"month\",stepmode=\"backward\"),\n",
+        "  dict(count=24, label=\"2y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(count=36, label=\"3y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(step=\"all\")])),rangeslider=dict(visible=True), type=\"date\"),legend_title_text='Park',title_x=0.5)\n",
+        "  return fig_line.show()"
+      ],
+      "metadata": {
+        "id": "1RdV7qBdPqmw"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def visitors_state(df,states_to_include=None):\n",
+        "  df['YearMonth'] = pd.to_datetime(df['Year'].astype(str) + \"-\" + df['Month'].astype(str).str.zfill(2) + \"-01\")\n",
+        "  monthly_state=df.groupby(['State','YearMonth'])['Recreation Visits'].sum().reset_index().sort_values(by=['State','YearMonth'],\n",
+        "                                                                                                       ascending=False)\n",
+        "  if states_to_include is not None:\n",
+        "    monthly_state = monthly_state[monthly_state['State'].isin(states_to_include)]\n",
+        "  states = monthly_state['State'].unique().tolist()\n",
+        "  full_idx = pd.date_range(start=monthly_state['YearMonth'].min(),end=monthly_state['YearMonth'].max(),freq='MS')\n",
+        "  all_combinations = pd.MultiIndex.from_product([states, full_idx],names=['State','YearMonth'])\n",
+        "  complete = monthly_state.set_index(['State','YearMonth']).reindex(all_combinations,fill_value=0).reset_index()\n",
+        "  complete = complete.sort_values(['State','YearMonth'])\n",
+        "  complete['Visits_3mo'] = complete.groupby('State')['Recreation Visits'].transform(lambda s: s.rolling(3, min_periods=1).sum())\n",
+        "  fig_line = px.line(complete,x='YearMonth',y='Visits_3mo',color='State',title='3-month Rolling Total Recreation Visits by State',\n",
+        "                     labels={'Visits_3mo':'3-month Total Visits', 'YearMonth':'Month'})\n",
+        "  fig_line.update_layout(xaxis=dict(rangeselector=dict(buttons=list([dict(count=12, label=\"1y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(count=24, label=\"2y\", step=\"month\", stepmode=\"backward\"),dict(count=36, label=\"3y\", step=\"month\", stepmode=\"backward\"),\n",
+        "  dict(step=\"all\")])), rangeslider=dict(visible=True), type=\"date\"),legend_title_text='State',title_x=0.5)\n",
+        "  return fig_line.show()"
+      ],
+      "metadata": {
+        "id": "bP-P6CwKPrS6"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "visitors_region(df)"
+      ],
+      "metadata": {
+        "id": "Qho6w1-zUZnt"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "visitors_park(df,['Abraham Lincoln Birthplace NHP','Aztec Ruins NM','Hopewell Furnace NHS'])"
+      ],
+      "metadata": {
+        "id": "kN0HHOA-iDXg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "visitors_state(df,['AK','AL','AR','AZ','CA','CO'])"
+      ],
+      "metadata": {
+        "id": "hYIB6A0aQGSE"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "visitors_state(df)"
+      ],
+      "metadata": {
+        "id": "4QPQNMA-bjgt"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def Visitorintensity_Region_Month(df):\n",
+        " visitor_intensity = (df.groupby(['Region', 'Month'], as_index=False)['Recreation Visits'].sum())\n",
+        "\n",
+        " month_names = {1:'Jan', 2:'Feb', 3:'Mar', 4:'Apr', 5:'May', 6:'Jun',7:'Jul', 8:'Aug', 9:'Sep', 10:'Oct', 11:'Nov', 12:'Dec'}\n",
+        " visitor_intensity['Month'] = visitor_intensity['Month'].map(month_names)\n",
+        "\n",
+        " fig = px.density_heatmap(visitor_intensity,x='Month',y='Region',z='Recreation Visits',color_continuous_scale='YlOrRd'\n",
+        " ,title='Visitor Intensity by Region and Month',labels={'Recreation Visits': 'Total Visits'})#Creating Heatmap\n",
+        " fig.update_layout(xaxis_title='Month',yaxis_title='Region',title_x=0.5,coloraxis_colorbar=dict(title='Visitor Intensity'))\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "bKa68XvnY6rr"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def Visitorintensity_Month_Decade(df):\n",
+        " df['Decade']=(df['Year']//10)*10\n",
+        " pivot = df.pivot_table(index='Decade',columns='Month', values='Recreation Visits', aggfunc='sum')\n",
+        " pivot.columns = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][:len(pivot.columns)]\n",
+        " fig = px.imshow(pivot,color_continuous_scale='Viridis',labels=dict(x=\"Month\", y=\"Decade\",\n",
+        "                                                                   color=\"Recreation Visits\"),title='Visitor Intensity by Decade and Month')\n",
+        " fig.update_layout(width=1200,height=600,title_x=0.5,xaxis_title='Month',yaxis_title='Decade',xaxis=dict(side=\"top\"))\n",
+        " return fig.show()"
+      ],
+      "metadata": {
+        "id": "kckXdnH7j8-G"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def Visitorintensity_Region_Decade(df):\n",
+        "  df['Decade']=(df['Year']//10)*10\n",
+        "  pivot = df.pivot_table(index='Decade',columns='Region', values='Recreation Visits', aggfunc='sum')\n",
+        "  fig = px.imshow(pivot,color_continuous_scale='Viridis',labels=dict(x=\"Region\", y=\"Decade\",\n",
+        "                                                                   color=\"Recreation Visits\"),title='Visitor Intensity by Decade and Region')\n",
+        "  fig.update_layout(width=1200,height=600,title_x=0.5,xaxis_title='Region',yaxis_title='Decade',xaxis=dict(side=\"top\"))\n",
+        "  return fig.show()"
+      ],
+      "metadata": {
+        "id": "RF8ICEOaoCCy"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#def Vistor"
+      ],
+      "metadata": {
+        "id": "yodyUQbeo97I"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Visitorintensity_Region_Month(df)"
+      ],
+      "metadata": {
+        "id": "EPgLOGNAYrB2"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Visitorintensity_Month_Decade(df)"
+      ],
+      "metadata": {
+        "id": "3aVYW3E8f2Hx"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "Visitorintensity_Region_Decade(df)"
+      ],
+      "metadata": {
+        "id": "YnLygGbljSc2"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
