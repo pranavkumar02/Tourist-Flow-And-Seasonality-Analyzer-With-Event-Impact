@@ -1,12 +1,13 @@
 # Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
-**Description:**
+**_Description:_**
+
 The Tourist Flow & Seasonality Analyzer with Event Impact is a data analytics and visualization project developed to analyze and understand tourism trends across the United States. The project explores how visitor flows vary by season, region, and major events, providing valuable insights for tourism boards, travel agencies, hotels, and city planners  make data-backed decisions on staffing, marketing, and promotions.
 
 This dashboard-based project combines data engineering, statistical analysis, and interactive visual storytelling to uncover patterns in tourist behavior and evaluate how festivals or large-scale events influence travel patterns and tourism-based economies.
 
 The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy, Event Calendars) and provides interactive dashboards with real-time hotspot/off-season maps.
 
-**Objectives**
+**_Objectives_**
 
 To analyze seasonal tourism trends across different U.S. states.
 
@@ -32,7 +33,8 @@ Deployed the final application on AWS, ensuring scalability, accessibility, and 
 
 Provided real-time analytics on visitor volume, YoY growth, and event-based spikes.
 
-**Project Architecture**
+**_Project Architecture_**
+
 The system follows a structured multi-layered architecture consisting of:
 
 **Data Layer:** Raw datasets stored in AWS S3 and PostgreSQL (RDS) form the foundation for analysis.
@@ -46,6 +48,7 @@ The system follows a structured multi-layered architecture consisting of:
 **Deployment Layer:** The project is hosted on AWS EC2 for accessibility and linked to AWS RDS for real-time data connectivity.
 
 ## Tech Stack
+
 Layer	Technology	Description
 
 **Language:**	Python (Pandas, NumPy, Scikit-learn) Core scripting.
