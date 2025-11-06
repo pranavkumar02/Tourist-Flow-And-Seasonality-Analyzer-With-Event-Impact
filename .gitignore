@@ -4,13 +4,14 @@ venv/
 
 # Hide all environment files
 .env
-
+**/.env
+*.env
 
 # Ignore temp checkpoints
 notebooks/.ipynb_checkpoints/
 
 # Ignore raw / cleaned data
-data/raw/
-data/cleaned/
+#data/raw/
+#data/cleaned/
 assets/
 
