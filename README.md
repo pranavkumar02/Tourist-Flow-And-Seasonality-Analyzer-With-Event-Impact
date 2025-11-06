@@ -1,5 +1,6 @@
 # Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
-**_Description:_**
+
+## _Description:_
 
 The Tourist Flow & Seasonality Analyzer with Event Impact is a data analytics and visualization project developed to analyze and understand tourism trends across the United States. The project explores how visitor flows vary by season, region, and major events, providing valuable insights for tourism boards, travel agencies, hotels, and city planners  make data-backed decisions on staffing, marketing, and promotions.
 
