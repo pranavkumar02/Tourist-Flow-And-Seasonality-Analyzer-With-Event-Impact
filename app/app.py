@@ -548,8 +548,8 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 
     return visitors, spend, occ, yoy_text, yoy_style, top_event, top_impact, top_origin, str(peak_year)
 
-# =========================
 #  RUN
 # =========================
 if __name__ == "__main__":
     app.run(debug=True)
+
