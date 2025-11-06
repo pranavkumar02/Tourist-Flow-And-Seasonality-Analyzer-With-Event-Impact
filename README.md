@@ -1,5 +1,6 @@
 # Tourist-Flow-And-Seasonality-Analyzer-With-Event-Impact
 
+
 ## _Description:_
 
 The Tourist Flow & Seasonality Analyzer with Event Impact is a data analytics and visualization project developed to analyze and understand tourism trends across the United States. The project explores how visitor flows vary by season, region, and major events, providing valuable insights for tourism boards, travel agencies, hotels, and city planners  make data-backed decisions on staffing, marketing, and promotions.
@@ -7,6 +8,7 @@ The Tourist Flow & Seasonality Analyzer with Event Impact is a data analytics an
 This dashboard-based project combines data engineering, statistical analysis, and interactive visual storytelling to uncover patterns in tourist behavior and evaluate how festivals or large-scale events influence travel patterns and tourism-based economies.
 
 The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy, Event Calendars) and provides interactive dashboards with real-time hotspot/off-season maps.
+
 
 ## _Objectives:_
 
@@ -19,6 +21,7 @@ To identify high and low tourism periods for better decision-making.
 To build an interactive dashboard where users can explore patterns through filters such as month, region, destination type, and event category.
 
 To deploy the entire project on a cloud-based environment for easy access and scalability.
+
 
 ## _Key Highlights:_
 
@@ -34,6 +37,7 @@ Deployed the final application on AWS, ensuring scalability, accessibility, and 
 
 Provided real-time analytics on visitor volume, YoY growth, and event-based spikes.
 
+
 ## _Project Architecture:_
 
 The system follows a structured multi-layered architecture consisting of:
@@ -47,6 +51,7 @@ The system follows a structured multi-layered architecture consisting of:
 **Visualization Layer:** Dash-based front-end interface that displays interactive visualizations such as maps, KPIs, heatmaps, and event impact charts.
 
 **Deployment Layer:** The project is hosted on AWS EC2 for accessibility and linked to AWS RDS for real-time data connectivity.
+
 
 ## _Tech Stack:_
 
@@ -100,6 +105,7 @@ The frontend is a Dash app featuring:
 
 **Deployment:** dashboard, GitHub Actions.
 
+
 ## _Business Insights:_
 
 **Peak Tourism Months**: June to August and December.
@@ -113,6 +119,7 @@ The frontend is a Dash app featuring:
 **YoY Growth:** Post-pandemic recovery evident with increasing domestic travel activity.
 
 These findings support strategic planning for marketing campaigns, event management, and regional tourism development.
+
 
 ## _Workload Distribution:_
 
@@ -143,6 +150,7 @@ Both members collaborate on cloud deployment, testing, and final presentation.
 
 **Phase 7	(Week 8):**	Testing, Final demo, final report submission, presentation.
 
+
 ## _How the Project Works:_
 
 **1. Data Collection:** Datasets are sourced from open U.S. tourism and event repositories.
@@ -154,6 +162,7 @@ Both members collaborate on cloud deployment, testing, and final presentation.
 **4. Dashboard Interaction:** The Dash app connects to the database, retrieves aggregated metrics, and updates all visuals dynamically when filters change.
 
 **5. Deployment:** The complete application is deployed to AWS, integrating EC2 for hosting and RDS for database management.
+
 
 ## _How to Run the Project:_
 
@@ -193,16 +202,18 @@ Strategize marketing campaigns around event-driven spikes.
 
 **Project Title:** Tourist Flow & Seasonality Analyzer with Event Impact
 
+**Track:** Data Analytics Capstone Project
+
 **Mentor:** Professor Darsh
 
 **Institution:** Seidenberg School of Computer Science & Information Systems, Pace University.
 
 **Duration:** 8 Weeks
 
-**Track:** Data Analytics Capstone Project
 
 ## _Weekly Progress Reports:_
 - [Week 3 Progress (Notion)] - (https://www.notion.so/Tourist-Flow-Seasonality-Analyzer-27b8d2f849ec8065b499c5b8b4914d89?source=copy_link)
+
 
 ## _Summary:_
 
