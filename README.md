@@ -8,7 +8,7 @@ This dashboard-based project combines data engineering, statistical analysis, an
 
 The system integrates multiple reliable U.S. datasets (TSA, NPS, Hotel Occupancy, Event Calendars) and provides interactive dashboards with real-time hotspot/off-season maps.
 
-**_Objectives:_**
+## _Objectives:_
 
 To analyze seasonal tourism trends across different U.S. states.
 
@@ -20,7 +20,7 @@ To build an interactive dashboard where users can explore patterns through filte
 
 To deploy the entire project on a cloud-based environment for easy access and scalability.
 
-**_Key Highlights:_**
+## _Key Highlights:_
 
 Developed a fully interactive dashboard using Plotly Dash with modern UI design and dynamic visual components.
 
@@ -34,7 +34,7 @@ Deployed the final application on AWS, ensuring scalability, accessibility, and 
 
 Provided real-time analytics on visitor volume, YoY growth, and event-based spikes.
 
-**_Project Architecture_**
+## _Project Architecture:_
 
 The system follows a structured multi-layered architecture consisting of:
 
@@ -69,7 +69,7 @@ Layer	Technology	Description
 **Theme and Styling:** Dash LUX Bootstrap Theme
 
 
-## Frontend dashboard (and Fullstack UI)
+## _Frontend dashboard (and Fullstack UI):_
 
 The frontend is a Dash app featuring:
 
@@ -100,7 +100,7 @@ The frontend is a Dash app featuring:
 
 **Deployment:** dashboard, GitHub Actions.
 
-**_Business Insights:_**
+## _Business Insights:_
 
 **Peak Tourism Months**: June to August and December.
 
@@ -125,7 +125,7 @@ These findings support strategic planning for marketing campaigns, event managem
 Both members collaborate on cloud deployment, testing, and final presentation.
 
 
-## Future Roadmap: Sprints / Phases
+## _Future Roadmap: Sprints / Phases_
 
 **Phase	Week Deliverables**
 
@@ -155,22 +155,22 @@ Both members collaborate on cloud deployment, testing, and final presentation.
 
 **5. Deployment:** The complete application is deployed to AWS, integrating EC2 for hosting and RDS for database management.
 
-**_## How to Run the Project:_**
+## _How to Run the Project:_
 
 To run the project, users simply:
 
-1. Install Python and dependencies (from requirements.txt).
+**1.** Install Python and dependencies (from requirements.txt).
 
-2. Set up a PostgreSQL database connection (local or AWS RDS).
+**2.** Set up a PostgreSQL database connection (local or AWS RDS).
 
-3. Execute ETL scripts to load data.
+**3.** Execute ETL scripts to load data.
 
-4. Run the main dashboard file (app.py).
+**4.** Run the main dashboard file (app.py).
 
-5. Open the application in a browser to interact with the dashboard.
+**5.** Open the application in a browser to interact with the dashboard.
 
 
-**_## Business Use Case:_**
+## _Business Use Case:_
 
 Tourism boards businesses often lack real-time visibility into seasonality and event-driven demand spikes. This tool empowers decision-makers to:
 
@@ -189,7 +189,7 @@ Identify fast-growing destinations for future opportunities.
 Strategize marketing campaigns around event-driven spikes.
 
 
-_**## Authors & Acknowledgements:**_
+## _Authors & Acknowledgements:_
 
 **Project Title:** Tourist Flow & Seasonality Analyzer with Event Impact
 
@@ -201,10 +201,10 @@ _**## Authors & Acknowledgements:**_
 
 **Track:** Data Analytics Capstone Project
 
-_**## Weekly Progress Reports:**_
+## _Weekly Progress Reports:_
 - [Week 3 Progress (Notion)] - (https://www.notion.so/Tourist-Flow-Seasonality-Analyzer-27b8d2f849ec8065b499c5b8b4914d89?source=copy_link)
 
-_**Summary:**_
+## _Summary:_
 
 This project demonstrates the complete life cycle of a real-world data analytics solution — from data collection and cleaning to visualization and cloud deployment.
 It transforms raw datasets into an insightful, interactive, and business-ready dashboard that helps understand tourism dynamics and event-driven behavior, showcasing the power of data analytics in shaping smarter tourism strategies.
