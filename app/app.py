@@ -12,18 +12,17 @@ import dash_bootstrap_components as dbc
 app = Dash(__name__, external_stylesheets=[dbc.themes.LUX], suppress_callback_exceptions=True)
 app.title = "Tourist Flow & Seasonality Analyzer"
 
-# Equal vertical spacing setup
-MAP_H = "45vh"       # Map + filters balanced height
-KPI_H = "13vh"       # KPI row height
-COLUMN_H = "61vh"    # Adjusted column container height
+# Equal vertical spacing setup (same gap above & below KPI row)
+MAP_H    = "45vh"
+KPI_H    = "13vh"
+COLUMN_H = "61vh"
 TITLE_TOP = "14px"
-ROW_GAP = "20px"     # Equal gaps between vertical sections
-
+ROW_GAP   = "16px"     # used in both places so spacing is equal
 
 COLOR_MAP = {"Normal": "#60a5fa", "Hotspot": "#ef4444", "Off-Season": "#f59e0b"}
 CATEGORY_ORDER = {"lift": ["Normal", "Hotspot", "Off-Season"]}
-MAP_BG = "#223542"
-CORAL = "#F88379"  # Event Impact bar color
+MAP_BG  = "#223542"
+CORAL   = "#F88379"    # Event Impact bar color
 
 # =========================
 #  PAGE SHELL / CSS
@@ -113,6 +112,7 @@ app.index_string = """
       .kpi-col{flex:1 1 0; max-width:none; display:flex;}
       .kpi-col>.card{width:100%;}
 
+      /* Bright white labels in dropdowns */
       .dash-dropdown .Select-control, .Select-control{
         background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%) !important;
         border:1px solid var(--border) !important;
@@ -186,11 +186,16 @@ df_month = pd.DataFrame({
     "visits": np.round(np.linspace(0.9, 1.6, 12) * 1_000_000, 0)
 })
 
-df_heat = (pd.DataFrame(np.random.randint(30, 95, size=(4,4)),
-                        index=["Spring","Summer","Fall","Winter"],
-                        columns=["Spring","Summer","Fall","Winter"])
-           .reset_index().melt(id_vars="index", var_name="Season", value_name="Score")
-           .rename(columns={"index":"Season_Row"}))
+def make_heat_df(values=None):
+    if values is None:
+        values = np.random.randint(30, 95, size=(4,4))
+    order = ["Spring","Summer","Fall","Winter"]
+    return (
+        pd.DataFrame(values, index=order, columns=order)
+          .reset_index()
+          .melt(id_vars="index", var_name="Season", value_name="Score")
+          .rename(columns={"index":"Season_Row"})
+    )
 
 evt = pd.DataFrame({
     "event":["Mardi Gras","Coachella","Art Basel","SXSW","Thanksgiving"],
@@ -243,12 +248,27 @@ def build_map(df):
     return fig
 
 def build_heatmap(dfh):
-    fig = px.density_heatmap(dfh, x="Season", y="Season_Row", z="Score", text_auto=True, color_continuous_scale="Blues")
+    # Robust imshow-based heatmap (categorical, fixed order, pinned range)
+    order = ["Spring","Summer","Fall","Winter"]
+    pivot = (
+        dfh.pivot(index="Season_Row", columns="Season", values="Score")
+           .reindex(index=order, columns=order)
+           .astype(float)
+           .fillna(0)
+    )
+    fig = px.imshow(
+        pivot,
+        text_auto=True,
+        color_continuous_scale="Blues",
+        aspect="auto",
+        zmin=0, zmax=100,
+        labels=dict(color="Score")
+    )
     fig = _common_layout(fig)
-    fig.update_xaxes(title="")
-    fig.update_yaxes(title="")
-    fig.update_layout(coloraxis_showscale=True,
-                      coloraxis_colorbar=dict(title="Score", tickfont=dict(color="#ffffff"), titlefont=dict(color="#ffffff")))
+    fig.update_layout(coloraxis_colorbar=dict(title="Score", tickfont=dict(color="#ffffff"),
+                                              titlefont=dict(color="#ffffff")))
+    fig.update_xaxes(title="", type="category", categoryorder="array", categoryarray=order)
+    fig.update_yaxes(title="", type="category", categoryorder="array", categoryarray=order)
     return fig
 
 def build_trend(dfl):
@@ -258,33 +278,35 @@ def build_trend(dfl):
     fig.update_yaxes(title="Tourist inflows", showgrid=False)
     return fig
 
+def build_pressure_scatter(visitors_m, occ_pct, event_strength):
+    regions = ["South","Mountain","East Coast","West"]
+    rng = np.random.default_rng(42)
+    region = rng.choice(regions, size=len(visitors_m))
+    fig = px.scatter(
+        x=visitors_m, y=occ_pct, size=event_strength,
+        color=region, color_discrete_sequence=px.colors.qualitative.Set2,
+        labels={"x":"Visitors (M)", "y":"Hotel Occupancy (%)", "color":"region"},
+    )
+    fig = _common_layout(fig)
+    fig.update_traces(marker=dict(line=dict(width=1, color="rgba(0,0,0,.25)")))
+    fig.update_xaxes(title="Visitors (M)")
+    fig.update_yaxes(title="Hotel Occupancy (%)", range=[30, 100])
+    return fig
+
 def build_events(e):
-    # Coral-peach bars with guaranteed outside labels using a separate text trace
     e = e.sort_values("spike")
     xmax = float(e["spike"].max())
-    pad = xmax * 0.08  # how far to move labels beyond the bar end
-
-    # Base horizontal bars (no text on the bar trace)
+    pad = xmax * 0.08
     bar = go.Bar(
         x=e["spike"], y=e["event"], orientation="h",
         marker=dict(color=CORAL),
         hovertemplate="<b>%{y}</b><br>Spike: %{x}%<extra></extra>",
         cliponaxis=False, showlegend=False
     )
-
-    # Rounded ends by adding circles at both ends
-    left_cap = go.Scatter(
-        x=[0]*len(e), y=e["event"], mode="markers",
-        marker=dict(color=CORAL, size=18),
-        hoverinfo="skip", showlegend=False
-    )
-    right_cap = go.Scatter(
-        x=e["spike"], y=e["event"], mode="markers",
-        marker=dict(color=CORAL, size=18),
-        hoverinfo="skip", showlegend=False
-    )
-
-    # OUTSIDE percentage labels (separate text trace)
+    left_cap  = go.Scatter(x=[0]*len(e),  y=e["event"], mode="markers",
+                           marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False)
+    right_cap = go.Scatter(x=e["spike"], y=e["event"], mode="markers",
+                           marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False)
     labels = go.Scatter(
         x=e["spike"] + pad, y=e["event"], mode="text",
         text=[f"{v}%" for v in e["spike"]],
@@ -293,7 +315,6 @@ def build_events(e):
         hoverinfo="skip", showlegend=False,
         cliponaxis=False
     )
-
     fig = go.Figure([bar, left_cap, right_cap, labels])
     fig = _common_layout(fig)
     fig.update_xaxes(title="Spike", showgrid=False, range=[0, xmax + pad*2.2])
@@ -302,8 +323,15 @@ def build_events(e):
     return fig
 
 # =========================
-#  COMPONENTS
+#  COMPONENTS (with initial figures so nothing loads blank)
 # =========================
+init_heat = build_heatmap(make_heat_df())
+init_trend = build_trend(df_month)
+init_press = build_pressure_scatter(np.round(df_month["visits"]/1_000_000,2),
+                                    np.linspace(55,85,12), np.linspace(10,35,12))
+init_evt = build_events(evt)
+init_map = build_map(df_map)
+
 sidebar_filters = dbc.Card(
     [
         html.Div("Filters", className="kpi-title mb-2"),
@@ -364,29 +392,31 @@ right_kpis = html.Div(
 )
 
 map_card = dbc.Card(
-    dcc.Graph(
-        id="us-map",
-        figure=build_map(df_map),
-        style={"height":"100%", "backgroundColor":"transparent"},
-        config={"displayModeBar": False}
-    ),
+    dcc.Graph(id="us-map", figure=init_map,
+              style={"height":"100%", "backgroundColor":"transparent"},
+              config={"displayModeBar": False}),
     className="soft-card tight map-card",
     style={"height": MAP_H}
 )
 
 heat_card = dbc.Card(
     [html.Div("Seasonality Heatmap", className="kpi-title mb-1"),
-     dcc.Graph(id="heatmap", figure=build_heatmap(df_heat), style={"height":"24vh"}, config={"displayModeBar": False})],
+     dcc.Graph(id="heatmap", figure=init_heat, style={"height":"24vh"}, config={"displayModeBar": False})],
     className="soft-card tight"
 )
 trend_card = dbc.Card(
     [html.Div("Drilldown — Tourist Inflows (Latest Year)", className="kpi-title mb-1"),
-     dcc.Graph(id="trend", figure=build_trend(df_month), style={"height":"24vh"}, config={"displayModeBar": False})],
+     dcc.Graph(id="trend", figure=init_trend, style={"height":"24vh"}, config={"displayModeBar": False})],
+    className="soft-card tight"
+)
+pressure_card = dbc.Card(
+    [html.Div("Tourism Pressure (Visitors × Occupancy × Events)", className="kpi-title mb-1"),
+     dcc.Graph(id="pressure", figure=init_press, style={"height":"24vh"}, config={"displayModeBar": False})],
     className="soft-card tight"
 )
 evt_card = dbc.Card(
     [html.Div("Event Impact", className="kpi-title mb-1"),
-     dcc.Graph(id="evt", figure=build_events(evt), style={"height":"24vh"}, config={"displayModeBar": False})],
+     dcc.Graph(id="evt", figure=init_evt, style={"height":"24vh"}, config={"displayModeBar": False})],
     className="soft-card tight"
 )
 
@@ -399,7 +429,6 @@ app.layout = dbc.Container(
             [dbc.Col(html.Div("Tourist Flow & Seasonality Analyzer", className="section-title"), width=12)],
             className="g-0", style={"height": "6vh", "marginTop": TITLE_TOP}
         ),
-
         dbc.Row(
             [
                 dbc.Col([sidebar_filters, html.Div(style={"height": ROW_GAP}), left_kpis],
@@ -409,14 +438,15 @@ app.layout = dbc.Container(
                         width=8,
                         style={"display":"flex","flexDirection":"column","height": COLUMN_H})
             ],
-            className="g-3"
+            className="gx-3 gy-0"
         ),
-
         dbc.Row(
-            [dbc.Col(heat_card,  width=4),
-             dbc.Col(trend_card, width=5),
-             dbc.Col(evt_card,   width=3)],
-            className="g-3",  style={"height":"25vh", "marginTop": "5px"}
+            [dbc.Col(heat_card,     width=3),
+             dbc.Col(trend_card,    width=3),
+             dbc.Col(pressure_card, width=3),
+             dbc.Col(evt_card,      width=3)],
+            className="gx-3 gy-0",
+            style={"height":"25vh", "marginTop": ROW_GAP}
         ),
     ],
     fluid=True, className="dbc-container pb-3",
@@ -430,6 +460,7 @@ app.layout = dbc.Container(
     [Output("us-map", "figure"),
      Output("heatmap", "figure"),
      Output("trend", "figure"),
+     Output("pressure", "figure"),
      Output("evt", "figure")],
     [Input("f-month", "value"),
      Input("f-region", "value"),
@@ -463,12 +494,9 @@ def update_all(month_val, region_val, dest_val, event_val):
     dfm["lift"] = pd.Categorical(dfm["lift"], categories=CATEGORY_ORDER["lift"], ordered=True)
     map_out = build_map(dfm)
 
-    # HEATMAP
+    # HEATMAP (categorical + pinned)
     heat_vals = rng.integers(30, 95, size=(4,4))
-    dfh = (pd.DataFrame(heat_vals, index=["Spring","Summer","Fall","Winter"],
-                        columns=["Spring","Summer","Fall","Winter"])
-           .reset_index().melt(id_vars="index", var_name="Season", value_name="Score")
-           .rename(columns={"index":"Season_Row"}))
+    dfh = make_heat_df(heat_vals)
     heat_out = build_heatmap(dfh)
 
     # TREND
@@ -479,12 +507,18 @@ def update_all(month_val, region_val, dest_val, event_val):
     visits = np.round(base * max(0.5, scale), 0)
     trend_out = build_trend(pd.DataFrame({"month": ALL_MONTHS, "visits": visits}))
 
+    # PRESSURE SCATTER
+    visitors_m = np.round(visits / 1_000_000, 2)
+    occ_pct = np.clip(55 + 20*np.sin(np.linspace(0, 2*np.pi, 12)) + rng.normal(0, 4, 12), 40, 95)
+    event_strength = np.clip(10 + rng.integers(0, 30, 12), 8, 40)
+    pressure_out = build_pressure_scatter(visitors_m, occ_pct, event_strength)
+
     # EVENTS
     ev = evt.copy()
     ev["spike"] = np.clip(ev["spike"] + rng.integers(-6, 7, len(ev)) + int(region_factor*5), 5, 60)
     evt_out = build_events(ev)
 
-    return map_out, heat_out, trend_out, evt_out
+    return map_out, heat_out, trend_out, pressure_out, evt_out
 
 # =========================
 #  CALLBACKS — KPIs (YoY color)
@@ -548,8 +582,8 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 
     return visitors, spend, occ, yoy_text, yoy_style, top_event, top_impact, top_origin, str(peak_year)
 
+# =========================
 #  RUN
 # =========================
 if __name__ == "__main__":
     app.run(debug=True)
-
