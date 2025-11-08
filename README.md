@@ -212,7 +212,7 @@ Strategize marketing campaigns around event-driven spikes.
 
 
 ## _Weekly Progress Reports:_
-- [Week 3 Progress (Notion)] - (https://www.notion.so/Tourist-Flow-Seasonality-Analyzer-27b8d2f849ec8065b499c5b8b4914d89?source=copy_link)
+- [Week 3 Progress (Notion)] - (https://www.notion.so/Manage-Projects-2908d2f849ec80b0bc5cc7ffb5c15178)
 
 
 ## _Summary:_
