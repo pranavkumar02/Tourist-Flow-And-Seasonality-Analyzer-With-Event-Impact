@@ -146,9 +146,9 @@ Both members collaborate on cloud deployment, testing, and final presentation.
 
 **Phase 5	(Week 6):**	Interactive map filters, drilldowns, QA dashboard.
 
-**Phase 6	(Week 7):**	AWS deployment (EC2 + RDS), optimize performance
+**Phase 6	(Week 7):** working dashboard prototype, 	optimize performance
 
-**Phase 7	(Week 8):**	Testing, Final demo, final report submission, presentation.
+**Phase 7	(Week 8):**	AWS deployment (EC2 + RDS), Testing, Final demo, final report submission, presentation.
 
 
 ## _How the Project Works:_
