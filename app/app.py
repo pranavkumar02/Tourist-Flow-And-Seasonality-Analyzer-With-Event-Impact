@@ -265,8 +265,13 @@ def build_heatmap(dfh):
         labels=dict(color="Score")
     )
     fig = _common_layout(fig)
-    fig.update_layout(coloraxis_colorbar=dict(title="Score", tickfont=dict(color="#ffffff"),
-                                              titlefont=dict(color="#ffffff")))
+    # FIX: use title=dict(text=..., font=...), not titlefont
+    fig.update_layout(
+        coloraxis_colorbar=dict(
+            title=dict(text="Score", font=dict(color="#ffffff")),
+            tickfont=dict(color="#ffffff")
+        )
+    )
     fig.update_xaxes(title="", type="category", categoryorder="array", categoryarray=order)
     fig.update_yaxes(title="", type="category", categoryorder="array", categoryarray=order)
     return fig
@@ -392,9 +397,12 @@ right_kpis = html.Div(
 )
 
 map_card = dbc.Card(
-    dcc.Graph(id="us-map", figure=init_map,
-              style={"height":"100%", "backgroundColor":"transparent"},
-              config={"displayModeBar": False}),
+    dcc.Graph(
+        id="us-map",
+        figure=init_map,
+        style={"height":"100%", "backgroundColor":"transparent"},
+        config={"displayModeBar": False}
+    ),
     className="soft-card tight map-card",
     style={"height": MAP_H}
 )
@@ -586,4 +594,4 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 #  RUN
 # =========================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=False)
