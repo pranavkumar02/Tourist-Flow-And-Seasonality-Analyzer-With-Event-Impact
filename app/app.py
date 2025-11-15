@@ -1,3 +1,4 @@
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -5,6 +6,7 @@ import plotly.graph_objects as go
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
+import math
 
 # =========================
 #  APP & THEME
@@ -19,8 +21,8 @@ COLUMN_H = "61vh"
 TITLE_TOP = "14px"
 ROW_GAP   = "16px"     # used in both places so spacing is equal
 
-COLOR_MAP = {"Normal": "#60a5fa", "Hotspot": "#ef4444", "Off-Season": "#f59e0b"}
-CATEGORY_ORDER = {"lift": ["Normal", "Hotspot", "Off-Season"]}
+COLOR_MAP = {"Hotspot": "#ef4444", "Normal": "#60a5fa", "Off-Season": "#f59e0b"}
+CATEGORY_ORDER = {"lift": ["Hotspot", "Normal", "Off-Season"]}
 MAP_BG  = "#223542"
 CORAL   = "#F88379"    # Event Impact bar color
 
@@ -160,42 +162,31 @@ app.index_string = """
 """
 
 # =========================
-#  DATA
+#  DATA: STATES, KPIs, MONTHS
 # =========================
 np.random.seed(7)
-state_codes = ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY",
-               "LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND",
-               "OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"]
-state_names = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
-               "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
-               "Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
-               "Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico",
-               "New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
-               "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
-               "Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia"]
 
-df_map = pd.DataFrame({
-    "state": state_codes,
-    "state_name": state_names,
-    "lift": np.random.choice(["Hotspot","Normal","Off-Season"], len(state_codes), p=[0.35,0.45,0.20])
-})
+state_codes = [
+    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY",
+    "LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND",
+    "OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"
+]
+state_names = [
+    "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
+    "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
+    "Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
+    "Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico",
+    "New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+    "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
+    "Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia"
+]
+
 kpi_baseline = {"total_visitors": 4_200_000, "avg_spend": 85}
 
 df_month = pd.DataFrame({
     "month": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     "visits": np.round(np.linspace(0.9, 1.6, 12) * 1_000_000, 0)
 })
-
-def make_heat_df(values=None):
-    if values is None:
-        values = np.random.randint(30, 95, size=(4,4))
-    order = ["Spring","Summer","Fall","Winter"]
-    return (
-        pd.DataFrame(values, index=order, columns=order)
-          .reset_index()
-          .melt(id_vars="index", var_name="Season", value_name="Score")
-          .rename(columns={"index":"Season_Row"})
-    )
 
 evt = pd.DataFrame({
     "event":["Mardi Gras","Coachella","Art Basel","SXSW","Thanksgiving"],
@@ -213,6 +204,73 @@ ALL_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 YEARS = list(range(2010, 2025))
 
 # =========================
+#  PARKS DATA (REAL DATASET)
+# =========================
+
+# ✅ UPDATED to your path
+PARKS_CSV_PATH = r"C:\capstone project\Tourist-Flow-And-Seasonality-Analyzer\app\all_parks_recreation_visits.csv"
+parks_df = pd.read_csv(PARKS_CSV_PATH)
+
+# Basic cleaning (use original column names from CSV)
+# Columns: Park, Unit Code, Park Type, Region, State, Year, Month, Recreation Visits
+parks_df = parks_df.dropna(subset=["State", "Park", "Month"])
+parks_df["State"] = parks_df["State"].astype(str).str.strip()
+parks_df["Park"] = parks_df["Park"].astype(str).str.strip()
+parks_df["Month"] = parks_df["Month"].astype(int)
+
+# Precompute segments: (month, state, segment) -> [parks...]
+PARK_SEGMENTS = {}
+
+for m in range(1, 13):
+    df_m = parks_df[parks_df["Month"] == m]
+    if df_m.empty:
+        continue
+
+    grouped = (
+        df_m.groupby(["State", "Park"], as_index=False)["Recreation Visits"]
+            .sum()
+    )
+
+    for state_code, sub in grouped.groupby("State"):
+        sub = sub.sort_values("Recreation Visits", ascending=False)
+        names = sub["Park"].tolist()
+        n = len(names)
+        if n == 0:
+            continue
+
+        q1 = max(1, math.ceil(n / 3))
+        q2 = max(q1 + 1, math.ceil(2 * n / 3)) if n >= 3 else n
+
+        hot = names[:q1]
+        normal = names[q1:q2]
+        off = names[q2:]
+
+        if hot:
+            PARK_SEGMENTS[(m, state_code, "Hotspot")] = hot
+        if normal:
+            PARK_SEGMENTS[(m, state_code, "Normal")] = normal
+        if off:
+            PARK_SEGMENTS[(m, state_code, "Off-Season")] = off
+
+# =========================
+#  BASE STATE MAP DATAFRAME
+# =========================
+df_map = pd.DataFrame({
+    "state": state_codes,
+    "state_name": state_names,
+    "lift": np.random.choice(["Hotspot","Normal","Off-Season"], len(state_codes), p=[0.35,0.45,0.20])
+})
+
+def initial_hover(row):
+    key = (7, row["state"], row["lift"])
+    parks = PARK_SEGMENTS.get(key, [])
+    if not parks:
+        return "No park data"
+    return ", ".join(parks[:5])
+
+df_map["hover_parks"] = df_map.apply(initial_hover, axis=1)
+
+# =========================
 #  FIGURE BUILDERS
 # =========================
 def _common_layout(fig):
@@ -228,27 +286,69 @@ def _common_layout(fig):
 
 def build_map(df):
     fig = px.choropleth(
-        df, locations="state", locationmode="USA-states", color="lift",
-        custom_data=["lift","state_name"], color_discrete_map=COLOR_MAP,
-        category_orders=CATEGORY_ORDER, scope="usa",
+        df,
+        locations="state",
+        locationmode="USA-states",
+        color="lift",
+        custom_data=["lift", "state_name", "hover_parks"],
+        color_discrete_map=COLOR_MAP,
+        category_orders=CATEGORY_ORDER,
+        scope="usa",
         hover_name="state_name",
-        hover_data={"state": False, "state_name": False, "lift": True},
+        hover_data={
+            "state": False,
+            "state_name": False,
+            "lift": True,
+            "hover_parks": False,
+        },
         labels={"lift": "Status"},
     )
+
     fig.update_layout(
         paper_bgcolor=MAP_BG,
         plot_bgcolor=MAP_BG,
-        geo=dict(bgcolor=MAP_BG, lakecolor=MAP_BG, showlakes=False, showland=True, landcolor=MAP_BG),
-        legend=dict(title="Status", orientation="v", y=0.98, yanchor="top", x=0.98, xanchor="right",
-                    bgcolor="rgba(0,0,0,0)", font=dict(color="#ffffff")),
+        geo=dict(
+            bgcolor=MAP_BG,
+            lakecolor=MAP_BG,
+            showlakes=False,
+            showland=True,
+            landcolor=MAP_BG,
+        ),
+        legend=dict(
+            title="Status",
+            orientation="v",
+            y=0.98,
+            yanchor="top",
+            x=0.98,
+            xanchor="right",
+            bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#ffffff"),
+        ),
         margin=dict(l=0, r=0, t=0, b=0),
-        hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff")
+        hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"),
     )
-    fig.update_traces(hovertemplate="<b>%{customdata[1]}</b><br>Status: %{customdata[0]}<extra></extra>")
+
+    fig.update_traces(
+        hovertemplate=(
+            "<b>%{customdata[1]}</b>"
+            "<br>Status: %{customdata[0]}"
+            "<br>Top parks: %{customdata[2]}<extra></extra>"
+        )
+    )
     return fig
 
+def make_heat_df(values=None):
+    if values is None:
+        values = np.random.randint(30, 95, size=(4,4))
+    order = ["Spring","Summer","Fall","Winter"]
+    return (
+        pd.DataFrame(values, index=order, columns=order)
+          .reset_index()
+          .melt(id_vars="index", var_name="Season", value_name="Score")
+          .rename(columns={"index":"Season_Row"})
+    )
+
 def build_heatmap(dfh):
-    # Robust imshow-based heatmap (categorical, fixed order, pinned range)
     order = ["Spring","Summer","Fall","Winter"]
     pivot = (
         dfh.pivot(index="Season_Row", columns="Season", values="Score")
@@ -265,13 +365,15 @@ def build_heatmap(dfh):
         labels=dict(color="Score")
     )
     fig = _common_layout(fig)
-    # FIX: use title=dict(text=..., font=...), not titlefont
+
+    # ✅ FIX: colorbar title must be an object with its own font
     fig.update_layout(
         coloraxis_colorbar=dict(
             title=dict(text="Score", font=dict(color="#ffffff")),
             tickfont=dict(color="#ffffff")
         )
     )
+
     fig.update_xaxes(title="", type="category", categoryorder="array", categoryarray=order)
     fig.update_yaxes(title="", type="category", categoryorder="array", categoryarray=order)
     return fig
@@ -308,10 +410,14 @@ def build_events(e):
         hovertemplate="<b>%{y}</b><br>Spike: %{x}%<extra></extra>",
         cliponaxis=False, showlegend=False
     )
-    left_cap  = go.Scatter(x=[0]*len(e),  y=e["event"], mode="markers",
-                           marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False)
-    right_cap = go.Scatter(x=e["spike"], y=e["event"], mode="markers",
-                           marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False)
+    left_cap  = go.Scatter(
+        x=[0]*len(e),  y=e["event"], mode="markers",
+        marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False
+    )
+    right_cap = go.Scatter(
+        x=e["spike"], y=e["event"], mode="markers",
+        marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False
+    )
     labels = go.Scatter(
         x=e["spike"] + pad, y=e["event"], mode="text",
         text=[f"{v}%" for v in e["spike"]],
@@ -328,12 +434,15 @@ def build_events(e):
     return fig
 
 # =========================
-#  COMPONENTS (with initial figures so nothing loads blank)
+#  COMPONENTS (INITIAL FIGURES)
 # =========================
 init_heat = build_heatmap(make_heat_df())
 init_trend = build_trend(df_month)
-init_press = build_pressure_scatter(np.round(df_month["visits"]/1_000_000,2),
-                                    np.linspace(55,85,12), np.linspace(10,35,12))
+init_press = build_pressure_scatter(
+    np.round(df_month["visits"]/1_000_000,2),
+    np.linspace(55,85,12),
+    np.linspace(10,35,12)
+)
 init_evt = build_events(evt)
 init_map = build_map(df_map)
 
@@ -344,7 +453,8 @@ sidebar_filters = dbc.Card(
         dcc.Dropdown(
             id="f-month", className="dash-dropdown",
             options=[{"label":m,"value":i+1} for i,m in enumerate(
-                ["January","February","March","April","May","June","July","August","September","October","November","December"])],
+                ["January","February","March","April","May","June","July","August",
+                 "September","October","November","December"])],
             value=7, clearable=False
         ),
         html.Div("Region", className="kpi-title mt-2"),
@@ -398,8 +508,7 @@ right_kpis = html.Div(
 
 map_card = dbc.Card(
     dcc.Graph(
-        id="us-map",
-        figure=init_map,
+        id="us-map", figure=init_map,
         style={"height":"100%", "backgroundColor":"transparent"},
         config={"displayModeBar": False}
     ),
@@ -439,12 +548,16 @@ app.layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col([sidebar_filters, html.Div(style={"height": ROW_GAP}), left_kpis],
-                        width=4,
-                        style={"display":"flex","flexDirection":"column","height": COLUMN_H}),
-                dbc.Col([map_card, html.Div(style={"height": ROW_GAP}), right_kpis],
-                        width=8,
-                        style={"display":"flex","flexDirection":"column","height": COLUMN_H})
+                dbc.Col(
+                    [sidebar_filters, html.Div(style={"height": ROW_GAP}), left_kpis],
+                    width=4,
+                    style={"display":"flex","flexDirection":"column","height": COLUMN_H}
+                ),
+                dbc.Col(
+                    [map_card, html.Div(style={"height": ROW_GAP}), right_kpis],
+                    width=8,
+                    style={"display":"flex","flexDirection":"column","height": COLUMN_H}
+                )
             ],
             className="gx-3 gy-0"
         ),
@@ -476,10 +589,12 @@ app.layout = dbc.Container(
      Input("f-event", "value")]
 )
 def update_all(month_val, region_val, dest_val, event_val):
-    seed = (int(month_val or 1) * 1000
-            + (hash(region_val) % 1000 if region_val else 0)
-            + (hash(dest_val) % 1000 if dest_val else 0)
-            + (hash(event_val) % 1000 if event_val else 0))
+    seed = (
+        int(month_val or 1) * 1000
+        + (hash(region_val) % 1000 if region_val else 0)
+        + (hash(dest_val) % 1000 if dest_val else 0)
+        + (hash(event_val) % 1000 if event_val else 0)
+    )
     rng = np.random.default_rng(seed)
 
     # MAP
@@ -497,12 +612,30 @@ def update_all(month_val, region_val, dest_val, event_val):
         p_hot += 0.03; p_nrm -= 0.02; p_off -= 0.01
     tot = p_hot + p_nrm + p_off
     probs = [p_hot/tot, p_nrm/tot, p_off/tot]
-    dfm.loc[sel_mask, "lift"] = rng.choice(["Hotspot","Normal","Off-Season"], size=sel_mask.sum(), p=probs)
+
+    dfm.loc[sel_mask, "lift"] = rng.choice(
+        ["Hotspot", "Normal", "Off-Season"],
+        size=sel_mask.sum(),
+        p=probs
+    )
     dfm.loc[~sel_mask, "lift"] = "Normal"
     dfm["lift"] = pd.Categorical(dfm["lift"], categories=CATEGORY_ORDER["lift"], ordered=True)
+
+    # attach hover text using current status (lift)
+    month_int = int(month_val or 1)
+
+    def get_hover_parks(row):
+        key = (month_int, row["state"], row["lift"])
+        parks = PARK_SEGMENTS.get(key, [])
+        if not parks:
+            return "No park data for this status"
+        return ", ".join(parks[:5])
+
+    dfm["hover_parks"] = dfm.apply(get_hover_parks, axis=1)
+
     map_out = build_map(dfm)
 
-    # HEATMAP (categorical + pinned)
+    # HEATMAP
     heat_vals = rng.integers(30, 95, size=(4,4))
     dfh = make_heat_df(heat_vals)
     heat_out = build_heatmap(dfh)
@@ -517,13 +650,19 @@ def update_all(month_val, region_val, dest_val, event_val):
 
     # PRESSURE SCATTER
     visitors_m = np.round(visits / 1_000_000, 2)
-    occ_pct = np.clip(55 + 20*np.sin(np.linspace(0, 2*np.pi, 12)) + rng.normal(0, 4, 12), 40, 95)
+    occ_pct = np.clip(
+        55 + 20*np.sin(np.linspace(0, 2*np.pi, 12)) + rng.normal(0, 4, 12),
+        40, 95
+    )
     event_strength = np.clip(10 + rng.integers(0, 30, 12), 8, 40)
     pressure_out = build_pressure_scatter(visitors_m, occ_pct, event_strength)
 
     # EVENTS
     ev = evt.copy()
-    ev["spike"] = np.clip(ev["spike"] + rng.integers(-6, 7, len(ev)) + int(region_factor*5), 5, 60)
+    ev["spike"] = np.clip(
+        ev["spike"] + rng.integers(-6, 7, len(ev)) + int(region_factor*5),
+        5, 60
+    )
     evt_out = build_events(ev)
 
     return map_out, heat_out, trend_out, pressure_out, evt_out
@@ -547,10 +686,12 @@ def update_all(month_val, region_val, dest_val, event_val):
      Input("f-event","value")]
 )
 def update_kpis(month_val, region_val, dest_val, event_val):
-    seed = (int(month_val or 1) * 1000
-            + (hash(region_val) % 1000 if region_val else 0)
-            + (hash(dest_val) % 1000 if dest_val else 0)
-            + (hash(event_val) % 1000 if event_val else 0))
+    seed = (
+        int(month_val or 1) * 1000
+        + (hash(region_val) % 1000 if region_val else 0)
+        + (hash(dest_val) % 1000 if dest_val else 0)
+        + (hash(event_val) % 1000 if event_val else 0)
+    )
     rng = np.random.default_rng(seed)
 
     dfm = df_map.copy()
@@ -571,7 +712,11 @@ def update_kpis(month_val, region_val, dest_val, event_val):
     yoy_style = {"color": "#4ade80"} if yoy_val >= 0 else {"color": "#f87171"}
 
     top_event = evt.sample(1, random_state=rng.integers(0, 10_000))["event"].iloc[0]
-    dfm.loc[sel_mask, "lift"] = rng.choice(["Hotspot","Normal","Off-Season"], size=sel_mask.sum(), p=[0.35,0.45,0.20])
+    dfm.loc[sel_mask, "lift"] = rng.choice(
+        ["Hotspot","Normal","Off-Season"],
+        size=sel_mask.sum(),
+        p=[0.35,0.45,0.20]
+    )
     dfm.loc[~sel_mask, "lift"] = "Normal"
     hot = dfm[dfm["lift"]=="Hotspot"]["state_name"]
     top_impact = hot.sample(1, random_state=rng.integers(0, 10_000)).iloc[0] if not hot.empty else "—"
@@ -594,4 +739,5 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 #  RUN
 # =========================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8050, debug=False)
+    app.run(debug=True)
+
