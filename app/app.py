@@ -207,7 +207,6 @@ YEARS = list(range(2010, 2025))
 #  PARKS DATA (REAL DATASET)
 # =========================
 
-# ✅ UPDATED to your path
 PARKS_CSV_PATH = r"C:\capstone project\Tourist-Flow-And-Seasonality-Analyzer\app\all_parks_recreation_visits.csv"
 parks_df = pd.read_csv(PARKS_CSV_PATH)
 
@@ -366,7 +365,6 @@ def build_heatmap(dfh):
     )
     fig = _common_layout(fig)
 
-    # ✅ FIX: colorbar title must be an object with its own font
     fig.update_layout(
         coloraxis_colorbar=dict(
             title=dict(text="Score", font=dict(color="#ffffff")),
@@ -621,7 +619,7 @@ def update_all(month_val, region_val, dest_val, event_val):
     dfm.loc[~sel_mask, "lift"] = "Normal"
     dfm["lift"] = pd.Categorical(dfm["lift"], categories=CATEGORY_ORDER["lift"], ordered=True)
 
-    # attach hover text using current status (lift)
+    
     month_int = int(month_val or 1)
 
     def get_hover_parks(row):
@@ -739,5 +737,5 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 #  RUN
 # =========================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=8050, debug=False)
 
