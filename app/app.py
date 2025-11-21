@@ -1,4 +1,4 @@
-
+import os
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -207,7 +207,8 @@ YEARS = list(range(2010, 2025))
 #  PARKS DATA (REAL DATASET)
 # =========================
 
-PARKS_CSV_PATH = r"C:\capstone project\Tourist-Flow-And-Seasonality-Analyzer\app\all_parks_recreation_visits.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PARKS_CSV_PATH = os.path.join(BASE_DIR, "all_parks_recreation_visits.csv")
 parks_df = pd.read_csv(PARKS_CSV_PATH)
 
 # Basic cleaning (use original column names from CSV)
