@@ -736,6 +736,11 @@ def update_kpis(month_val, region_val, dest_val, event_val):
 # =========================
 #  RUN
 # =========================
+'''
+if __name__ == "__main__":
+    app.run(debug=True)
+   ''' 
+    
+# for AWS   
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8050, debug=False)
-
