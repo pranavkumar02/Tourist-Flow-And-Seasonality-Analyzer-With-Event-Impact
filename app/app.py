@@ -1,4 +1,6 @@
-import os
+import math
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -6,25 +8,33 @@ import plotly.graph_objects as go
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
-import math
 
 # =========================
 #  APP & THEME
 # =========================
-app = Dash(__name__, external_stylesheets=[dbc.themes.LUX], suppress_callback_exceptions=True)
+app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.LUX],
+    suppress_callback_exceptions=True,
+)
 app.title = "Tourist Flow & Seasonality Analyzer"
 
-# Equal vertical spacing setup (same gap above & below KPI row)
-MAP_H    = "45vh"
-KPI_H    = "13vh"
-COLUMN_H = "61vh"
-TITLE_TOP = "14px"
-ROW_GAP   = "16px"     # used in both places so spacing is equal
+# ---- Layout tuning ----
+MAP_H     = "50vh"
+COLUMN_H  = "51vh"   # reduced from 56vh → FIXES GAP
+KPI_H     = "11vh"
+CHART_H   = "20vh"
+TITLE_TOP = "4px"
 
-COLOR_MAP = {"Hotspot": "#ef4444", "Normal": "#60a5fa", "Off-Season": "#f59e0b"}
+COLOR_MAP = {
+    "Hotspot": "#ef4444",
+    "Normal": "#60a5fa",
+    "Off-Season": "#f59e0b",
+}
 CATEGORY_ORDER = {"lift": ["Hotspot", "Normal", "Off-Season"]}
-MAP_BG  = "#223542"
-CORAL   = "#F88379"    # Event Impact bar color
+MAP_BG   = "#223542"
+CORAL    = "#F88379"   # Top-5 bar color
+BUBBLE   = "#2aa7d6"   # area chart color
 
 # =========================
 #  PAGE SHELL / CSS
@@ -105,7 +115,7 @@ app.index_string = """
         color:transparent;
         text-shadow:0 2px 3px rgba(0,0,0,.35);
         margin:0;
-        transform: translateY(-8px);
+        transform: translateY(-4px);
       }
 
       .kpi-title{font-size:12px; color:#ffffff; margin-bottom:6px;}
@@ -114,7 +124,7 @@ app.index_string = """
       .kpi-col{flex:1 1 0; max-width:none; display:flex;}
       .kpi-col>.card{width:100%;}
 
-      /* Bright white labels in dropdowns */
+      /* Dropdown styling */
       .dash-dropdown .Select-control, .Select-control{
         background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%) !important;
         border:1px solid var(--border) !important;
@@ -128,9 +138,17 @@ app.index_string = """
       .Select-value-label, .Select-placeholder, .Select-input > input{
         color:#ffffff !important;
       }
-      .dash-dropdown .Select-menu-outer, .Select-menu-outer{
-        background:var(--panel) !important; border:1px solid var(--border) !important;
+
+      /* MAKE MENU SHORTER & SCROLLABLE */
+      .dash-dropdown .Select-menu-outer,
+      .Select-menu-outer{
+        background:var(--panel) !important;
+        border:1px solid var(--border) !important;
+        max-height:200px !important;
+        overflow-y:auto !important;
+        z-index:9999 !important;
       }
+
       .dash-dropdown .Select-menu-outer .Select-option,
       .Select-menu-outer .Select-option,
       .VirtualizedSelectOption,
@@ -162,7 +180,7 @@ app.index_string = """
 """
 
 # =========================
-#  DATA: STATES, KPIs, MONTHS
+#  DATA LOADING
 # =========================
 np.random.seed(7)
 
@@ -180,105 +198,139 @@ state_names = [
     "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
     "Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia"
 ]
-
-kpi_baseline = {"total_visitors": 4_200_000, "avg_spend": 85}
-
-df_month = pd.DataFrame({
-    "month": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
-    "visits": np.round(np.linspace(0.9, 1.6, 12) * 1_000_000, 0)
-})
-
-evt = pd.DataFrame({
-    "event":["Mardi Gras","Coachella","Art Basel","SXSW","Thanksgiving"],
-    "region":["Louisiana","California","Florida","Texas","Nationwide"],
-    "spike":[25,40,40,18,12],
-})
+STATE_NAME_MAP = dict(zip(state_codes, state_names))
 
 REGIONS = {
     "East Coast": ["ME","NH","MA","RI","CT","NY","NJ","PA","DE","MD","DC","VA","NC","SC","GA","FL"],
     "West": ["CA","OR","WA","AK","HI"],
     "South": ["TX","OK","AR","LA","MS","AL","TN","KY","GA","FL","SC","NC","VA","WV","MD","DC","DE"],
-    "Mountain": ["AZ","NM","CO","UT","NV","ID","MT","WY"]
+    "Mountain": ["AZ","NM","CO","UT","NV","ID","MT","WY"],
 }
 ALL_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-YEARS = list(range(2010, 2025))
 
-# =========================
-#  PARKS DATA (REAL DATASET)
-# =========================
+PARKS_CSV_PATH = Path(__file__).parent / "all_parks_recreation_visits.csv"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PARKS_CSV_PATH = os.path.join(BASE_DIR, "all_parks_recreation_visits.csv")
 parks_df = pd.read_csv(PARKS_CSV_PATH)
 
-# Basic cleaning (use original column names from CSV)
-# Columns: Park, Unit Code, Park Type, Region, State, Year, Month, Recreation Visits
-parks_df = parks_df.dropna(subset=["State", "Park", "Month"])
+parks_df = parks_df.dropna(subset=["State", "Park", "Month", "Year", "Recreation Visits"])
 parks_df["State"] = parks_df["State"].astype(str).str.strip()
 parks_df["Park"] = parks_df["Park"].astype(str).str.strip()
 parks_df["Month"] = parks_df["Month"].astype(int)
+parks_df["Year"] = parks_df["Year"].astype(int)
+parks_df["Recreation Visits"] = parks_df["Recreation Visits"].astype(float)
 
-# Precompute segments: (month, state, segment) -> [parks...]
-PARK_SEGMENTS = {}
+if "Park Type" not in parks_df.columns:
+    parks_df["Park Type"] = "Unknown"
 
-for m in range(1, 13):
-    df_m = parks_df[parks_df["Month"] == m]
-    if df_m.empty:
-        continue
+def map_region_group(state_code: str) -> str:
+    for r, lst in REGIONS.items():
+        if state_code in lst:
+            return r
+    return "Other"
 
-    grouped = (
-        df_m.groupby(["State", "Park"], as_index=False)["Recreation Visits"]
-            .sum()
+parks_df["RegionGroup"] = parks_df["State"].map(map_region_group)
+
+YEARS = sorted(parks_df["Year"].unique())
+LATEST_YEAR = max(YEARS)
+
+# =========================
+#  FILTER HELPER
+# =========================
+def filter_parks(month_val=None, year_val=None, region_val=None,
+                 dest_val=None, park_type_val=None):
+    df = parks_df.copy()
+
+    if year_val is not None:
+        df = df[df["Year"] == int(year_val)]
+
+    if month_val is not None:
+        df = df[df["Month"] == int(month_val)]
+
+    if region_val and region_val != "All":
+        allowed = set(REGIONS.get(region_val, []))
+        df = df[df["State"].isin(allowed)]
+
+    # Destination type – very simple logic
+    if dest_val == "National Park":
+        df = df[df["Park Type"].str.contains("National Park", case=False, na=False)]
+    elif dest_val == "City":
+        df = df[~df["Park Type"].str.contains("National Park", case=False, na=False)]
+    # dest_val == "State" → no extra filter
+
+    if park_type_val and park_type_val != "All":
+        df = df[df["Park Type"] == park_type_val]
+
+    return df
+
+# =========================
+#  MAP + FIGURE HELPERS
+# =========================
+def classify_state_status(month_val, year_val, region_val, dest_val, park_type_val):
+    df = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
+    if df.empty:
+        return {s: "Normal" for s in state_codes}
+
+    grouped = df.groupby("State", as_index=False)["Recreation Visits"].sum()
+    q_off = grouped["Recreation Visits"].quantile(0.33)
+    q_hot = grouped["Recreation Visits"].quantile(0.66)
+
+    status = {}
+    for _, row in grouped.iterrows():
+        v = row["Recreation Visits"]
+        if v >= q_hot:
+            seg = "Hotspot"
+        elif v <= q_off:
+            seg = "Off-Season"
+        else:
+            seg = "Normal"
+        status[row["State"]] = seg
+
+    for s in state_codes:
+        status.setdefault(s, "Normal")
+
+    return status
+
+def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
+    status_map = classify_state_status(month_val, year_val, region_val, dest_val, park_type_val)
+
+    df = pd.DataFrame({
+        "state": state_codes,
+        "state_name": [STATE_NAME_MAP[s] for s in state_codes],
+        "lift": [status_map[s] for s in state_codes],
+    })
+    df["lift"] = pd.Categorical(df["lift"],
+                                categories=CATEGORY_ORDER["lift"],
+                                ordered=True)
+
+    df_month = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
+    if df_month.empty:
+        df["hover_parks"] = "No park data"
+        return df
+
+    grouped = df_month.groupby(["State", "Park"], as_index=False)["Recreation Visits"].sum()
+    top_by_state = (
+        grouped.sort_values("Recreation Visits", ascending=False)
+        .groupby("State")["Park"]
+        .apply(list)
+        .to_dict()
     )
 
-    for state_code, sub in grouped.groupby("State"):
-        sub = sub.sort_values("Recreation Visits", ascending=False)
-        names = sub["Park"].tolist()
-        n = len(names)
-        if n == 0:
-            continue
+    hover = []
+    for _, row in df.iterrows():
+        parks = top_by_state.get(row["state"], [])
+        if not parks:
+            hover.append("No park data")
+        else:
+            hover.append(", ".join(parks[:5]))
+    df["hover_parks"] = hover
+    return df
 
-        q1 = max(1, math.ceil(n / 3))
-        q2 = max(q1 + 1, math.ceil(2 * n / 3)) if n >= 3 else n
-
-        hot = names[:q1]
-        normal = names[q1:q2]
-        off = names[q2:]
-
-        if hot:
-            PARK_SEGMENTS[(m, state_code, "Hotspot")] = hot
-        if normal:
-            PARK_SEGMENTS[(m, state_code, "Normal")] = normal
-        if off:
-            PARK_SEGMENTS[(m, state_code, "Off-Season")] = off
-
-# =========================
-#  BASE STATE MAP DATAFRAME
-# =========================
-df_map = pd.DataFrame({
-    "state": state_codes,
-    "state_name": state_names,
-    "lift": np.random.choice(["Hotspot","Normal","Off-Season"], len(state_codes), p=[0.35,0.45,0.20])
-})
-
-def initial_hover(row):
-    key = (7, row["state"], row["lift"])
-    parks = PARK_SEGMENTS.get(key, [])
-    if not parks:
-        return "No park data"
-    return ", ".join(parks[:5])
-
-df_map["hover_parks"] = df_map.apply(initial_hover, axis=1)
-
-# =========================
-#  FIGURE BUILDERS
-# =========================
 def _common_layout(fig):
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#ffffff")
+        font=dict(color="#ffffff"),
     )
     fig.update_xaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
     fig.update_yaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
@@ -295,21 +347,15 @@ def build_map(df):
         category_orders=CATEGORY_ORDER,
         scope="usa",
         hover_name="state_name",
-        hover_data={
-            "state": False,
-            "state_name": False,
-            "lift": True,
-            "hover_parks": False,
-        },
+        hover_data={"state": False, "state_name": False,
+                    "lift": True, "hover_parks": False},
         labels={"lift": "Status"},
     )
-
     fig.update_layout(
         paper_bgcolor=MAP_BG,
         plot_bgcolor=MAP_BG,
         geo=dict(
             bgcolor=MAP_BG,
-            lakecolor=MAP_BG,
             showlakes=False,
             showland=True,
             landcolor=MAP_BG,
@@ -327,7 +373,6 @@ def build_map(df):
         margin=dict(l=0, r=0, t=0, b=0),
         hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"),
     )
-
     fig.update_traces(
         hovertemplate=(
             "<b>%{customdata[1]}</b>"
@@ -337,203 +382,390 @@ def build_map(df):
     )
     return fig
 
-def make_heat_df(values=None):
-    if values is None:
-        values = np.random.randint(30, 95, size=(4,4))
-    order = ["Spring","Summer","Fall","Winter"]
-    return (
-        pd.DataFrame(values, index=order, columns=order)
-          .reset_index()
-          .melt(id_vars="index", var_name="Season", value_name="Score")
-          .rename(columns={"index":"Season_Row"})
-    )
+def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
+    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
 
-def build_heatmap(dfh):
-    order = ["Spring","Summer","Fall","Winter"]
-    pivot = (
-        dfh.pivot(index="Season_Row", columns="Season", values="Score")
-           .reindex(index=order, columns=order)
-           .astype(float)
-           .fillna(0)
-    )
+    if df.empty:
+        order_regions = ["East Coast", "Mountain", "South", "West"]
+        seasons = ["Spring", "Summer", "Fall", "Winter"]
+        pivot = pd.DataFrame(0, index=order_regions, columns=seasons)
+    else:
+        def month_to_season(m):
+            if m in [3, 4, 5]:
+                return "Spring"
+            if m in [6, 7, 8]:
+                return "Summer"
+            if m in [9, 10, 11]:
+                return "Fall"
+            return "Winter"
+
+        df["Season"] = df["Month"].apply(month_to_season)
+        agg = df.groupby(["RegionGroup", "Season"], as_index=False)["Recreation Visits"].sum()
+        agg = agg[agg["RegionGroup"] != "Other"]
+        order_regions = ["East Coast", "Mountain", "South", "West"]
+        seasons = ["Spring", "Summer", "Fall", "Winter"]
+        pivot = (
+            agg.pivot(index="RegionGroup", columns="Season", values="Recreation Visits")
+            .reindex(index=order_regions, columns=seasons)
+            .fillna(0.0)
+        )
+
     fig = px.imshow(
         pivot,
-        text_auto=True,
         color_continuous_scale="Blues",
         aspect="auto",
-        zmin=0, zmax=100,
-        labels=dict(color="Score")
+        labels=dict(color="Visits"),
+        text_auto=False,  # numbers only in hover
     )
     fig = _common_layout(fig)
-
     fig.update_layout(
         coloraxis_colorbar=dict(
-            title=dict(text="Score", font=dict(color="#ffffff")),
-            tickfont=dict(color="#ffffff")
+            title="Visits",
+            tickfont=dict(color="#ffffff"),
+            titlefont=dict(color="#ffffff"),
         )
     )
-
-    fig.update_xaxes(title="", type="category", categoryorder="array", categoryarray=order)
-    fig.update_yaxes(title="", type="category", categoryorder="array", categoryarray=order)
+    fig.update_xaxes(title="", type="category")
+    fig.update_yaxes(title="", type="category")
     return fig
 
-def build_trend(dfl):
-    fig = px.line(dfl, x="month", y="visits", markers=True)
+def build_trend_real(year_val, region_val, dest_val, park_type_val):
+    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
+    if df.empty:
+        visits = np.zeros(12)
+    else:
+        agg = df.groupby("Month", as_index=False)["Recreation Visits"].sum().set_index("Month")
+        visits = [agg["Recreation Visits"].get(m, 0.0) for m in range(1, 13)]
+
+    dfl = pd.DataFrame({"MonthName": ALL_MONTHS, "Visits": visits})
+    fig = px.line(dfl, x="MonthName", y="Visits", markers=True)
     fig = _common_layout(fig)
+    fig.update_traces(line=dict(width=2))
     fig.update_xaxes(title="", showgrid=False)
     fig.update_yaxes(title="Tourist inflows", showgrid=False)
     return fig
 
-def build_pressure_scatter(visitors_m, occ_pct, event_strength):
-    regions = ["South","Mountain","East Coast","West"]
-    rng = np.random.default_rng(42)
-    region = rng.choice(regions, size=len(visitors_m))
-    fig = px.scatter(
-        x=visitors_m, y=occ_pct, size=event_strength,
-        color=region, color_discrete_sequence=px.colors.qualitative.Set2,
-        labels={"x":"Visitors (M)", "y":"Hotel Occupancy (%)", "color":"region"},
+def build_top_park_per_year_bubble(region_val, dest_val, park_type_val):
+    """
+    AREA chart: each point = TOP park of that year.
+    x = Year, y = Visits, filled to zero.
+    """
+    df = filter_parks(None, None, region_val, dest_val, park_type_val)
+    if df.empty:
+        df_top = pd.DataFrame({"Year": [0], "Park": ["—"], "Recreation Visits": [0.0]})
+    else:
+        agg = df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"].sum()
+        # keep biggest park per year
+        top_per_year = (
+            agg.sort_values(["Year", "Recreation Visits"], ascending=[True, False])
+               .groupby("Year")
+               .head(1)
+        )
+        df_top = top_per_year.sort_values("Year")
+        # only last 20 years to keep it readable
+        if len(df_top) > 20:
+            df_top = df_top.tail(20)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=df_top["Year"],
+            y=df_top["Recreation Visits"],
+            mode="lines",
+            fill="tozeroy",
+            line=dict(color=BUBBLE, width=2),
+            hovertext=df_top["Park"],
+            hovertemplate="<b>%{hovertext}</b><br>Year: %{x}<br>Visits: %{y:,.0f}<extra></extra>",
+        )
     )
     fig = _common_layout(fig)
-    fig.update_traces(marker=dict(line=dict(width=1, color="rgba(0,0,0,.25)")))
-    fig.update_xaxes(title="Visitors (M)")
-    fig.update_yaxes(title="Hotel Occupancy (%)", range=[30, 100])
+    fig.update_xaxes(title="Year", showgrid=False)
+    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
     return fig
 
-def build_events(e):
-    e = e.sort_values("spike")
-    xmax = float(e["spike"].max())
-    pad = xmax * 0.08
-    bar = go.Bar(
-        x=e["spike"], y=e["event"], orientation="h",
-        marker=dict(color=CORAL),
-        hovertemplate="<b>%{y}</b><br>Spike: %{x}%<extra></extra>",
-        cliponaxis=False, showlegend=False
+def shorten_park_label(name: str) -> str:
+    if not isinstance(name, str):
+        return str(name)
+    repl = {
+        "National Historical Park": "NHP",
+        "National Historic Site": "NHS",
+        "National Historic": "NH",
+        "National Recreation Area": "NRA",
+        "National Recreation": "NR",
+        "National Seashore": "NSH",
+        "National Monument": "NM",
+        "National Park": "NP",
+        "Memorial": "MEM",
+        "Parkway": "PKWY",
+    }
+    s = name
+    for k, v in repl.items():
+        s = s.replace(k, v)
+    s = s.strip()
+    if len(s) > 26:
+        s = s[:23] + "..."
+    return s
+
+def build_top5_parks(year_val, region_val, dest_val, park_type_val):
+    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
+
+    if df.empty:
+        parks = pd.DataFrame({"Park": ["—"], "Recreation Visits": [0.0], "short": ["—"], "State": ["—"]})
+    else:
+        agg = (
+            df.groupby(["State", "Park"], as_index=False)["Recreation Visits"]
+              .sum()
+              .sort_values("Recreation Visits", ascending=False)
+              .head(5)
+        )
+        agg["short"] = agg["State"]  # show only state code on axis
+        parks = agg
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=parks["Recreation Visits"],
+            y=parks["short"],
+            orientation="h",
+            marker=dict(color=CORAL),
+            customdata=parks["Park"],
+            hovertemplate="<b>%{customdata}</b><br>Visits: %{x:,.0f}<extra></extra>",
+            showlegend=False,
+        )
     )
-    left_cap  = go.Scatter(
-        x=[0]*len(e),  y=e["event"], mode="markers",
-        marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False
-    )
-    right_cap = go.Scatter(
-        x=e["spike"], y=e["event"], mode="markers",
-        marker=dict(color=CORAL, size=18), hoverinfo="skip", showlegend=False
-    )
-    labels = go.Scatter(
-        x=e["spike"] + pad, y=e["event"], mode="text",
-        text=[f"{v}%" for v in e["spike"]],
-        textfont=dict(color="#ffffff"),
-        textposition="middle left",
-        hoverinfo="skip", showlegend=False,
-        cliponaxis=False
-    )
-    fig = go.Figure([bar, left_cap, right_cap, labels])
     fig = _common_layout(fig)
-    fig.update_xaxes(title="Spike", showgrid=False, range=[0, xmax + pad*2.2])
-    fig.update_yaxes(title="", showgrid=False)
-    fig.update_layout(hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"))
+    fig.update_xaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
+    fig.update_yaxes(title="State", showgrid=False)
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),
+        hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"),
+    )
     return fig
 
 # =========================
-#  COMPONENTS (INITIAL FIGURES)
+#  KPI HELPERS
 # =========================
-init_heat = build_heatmap(make_heat_df())
-init_trend = build_trend(df_month)
-init_press = build_pressure_scatter(
-    np.round(df_month["visits"]/1_000_000,2),
-    np.linspace(55,85,12),
-    np.linspace(10,35,12)
-)
-init_evt = build_events(evt)
-init_map = build_map(df_map)
+def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
+    month_int = int(month_val)
+    year_int  = int(year_val)
 
+    df_month = filter_parks(month_int, year_int, region_val, dest_val, park_type_val)
+
+    if df_month.empty:
+        top_park_month = "—"
+        total_month = 0.0
+        active = 0
+        avg = 0.0
+    else:
+        g = (
+            df_month.groupby("Park")["Recreation Visits"]
+                    .sum()
+                    .sort_values(ascending=False)
+        )
+        top_park_month = g.index[0]
+        total_month = float(g.sum())
+        active = g.size
+        avg = total_month / max(active, 1)
+
+    df_all = filter_parks(None, None, region_val, dest_val, park_type_val)
+    if df_all.empty:
+        peak_year = year_int
+        yoy_pct = 0.0
+    else:
+        yearly = df_all.groupby("Year", as_index=False)["Recreation Visits"].sum()
+        peak_row = yearly.sort_values("Recreation Visits", ascending=False).iloc[0]
+        peak_year = int(peak_row["Year"])
+        curr = yearly[yearly["Year"] == year_int]["Recreation Visits"]
+        prev = yearly[yearly["Year"] == (year_int - 1)]["Recreation Visits"]
+        if curr.empty or prev.empty or prev.iloc[0] == 0:
+            yoy_pct = 0.0
+        else:
+            yoy_pct = (curr.iloc[0] - prev.iloc[0]) / prev.iloc[0] * 100.0
+
+    df_year = filter_parks(None, year_int, region_val, dest_val, park_type_val)
+    if df_year.empty:
+        top_park_year = "—"
+    else:
+        g_year = (
+            df_year.groupby("Park")["Recreation Visits"]
+                   .sum()
+                   .sort_values(ascending=False)
+        )
+        top_park_year = g_year.index[0]
+
+    return {
+        "top_park_month": top_park_month,
+        "avg_per_park": avg,
+        "total_month": total_month,
+        "peak_year": peak_year,
+        "yoy_pct": yoy_pct,
+        "yoy_positive": yoy_pct >= 0,
+        "top_park_year": top_park_year,
+        "active_parks": active,
+    }
+
+# =========================
+#  INITIAL FIGURES
+# =========================
+DEFAULT_MONTH = 7
+DEFAULT_YEAR = LATEST_YEAR
+
+df_map_init  = build_base_map_df(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_map     = build_map(df_map_init)
+init_heat    = build_heatmap_real("All", "State", DEFAULT_YEAR, "All")
+init_trend   = build_trend_real(DEFAULT_YEAR, "All", "State", "All")
+init_bubble  = build_top_park_per_year_bubble("All", "State", "All")
+init_top5    = build_top5_parks(DEFAULT_YEAR, "All", "State", "All")
+
+kpi0 = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+
+# =========================
+#  COMPONENTS
+# =========================
 sidebar_filters = dbc.Card(
     [
         html.Div("Filters", className="kpi-title mb-2"),
         html.Div("Month", className="kpi-title"),
         dcc.Dropdown(
-            id="f-month", className="dash-dropdown",
-            options=[{"label":m,"value":i+1} for i,m in enumerate(
-                ["January","February","March","April","May","June","July","August",
-                 "September","October","November","December"])],
-            value=7, clearable=False
+            id="f-month",
+            className="dash-dropdown",
+            options=[{"label": m, "value": i + 1}
+                     for i, m in enumerate(
+                        ["January","February","March","April","May","June","July",
+                         "August","September","October","November","December"]
+                     )],
+            value=DEFAULT_MONTH,
+            clearable=False,
+        ),
+        html.Div("Year", className="kpi-title mt-2"),
+        dcc.Dropdown(
+            id="f-year",
+            className="dash-dropdown",
+            options=[{"label": str(y), "value": int(y)} for y in YEARS],
+            value=DEFAULT_YEAR,
+            clearable=False,
         ),
         html.Div("Region", className="kpi-title mt-2"),
         dcc.Dropdown(
-            id="f-region", className="dash-dropdown",
-            options=[{"label":r,"value":r} for r in ["All","East Coast","West","South","Mountain"]],
-            value="All"
+            id="f-region",
+            className="dash-dropdown",
+            options=[{"label": r, "value": r}
+                     for r in ["All","East Coast","West","South","Mountain"]],
+            value="All",
         ),
         html.Div("Destination Type", className="kpi-title mt-2"),
         dcc.Dropdown(
-            id="f-dest", className="dash-dropdown",
-            options=[{"label":x,"value":x} for x in ["State","City","National Park"]],
-            value="State"
+            id="f-dest",
+            className="dash-dropdown",
+            options=[{"label": x, "value": x}
+                     for x in ["State","City","National Park"]],
+            value="State",
         ),
-        html.Div("Event Category", className="kpi-title mt-2"),
+        html.Div("Park Type", className="kpi-title mt-2"),
         dcc.Dropdown(
-            id="f-event", className="dash-dropdown",
-            options=[{"label":x,"value":x} for x in ["All","Music Festivals","Art Fairs","Sports","Holidays"]],
-            value="All"
+            id="f-park-type",
+            className="dash-dropdown",
+            options=(
+                [{"label": "All", "value": "All"}] +
+                [{"label": t, "value": t}
+                 for t in sorted(parks_df["Park Type"].dropna().unique())]
+            ),
+            value="All",
+            clearable=False,
+            maxHeight=200,
         ),
     ],
     className="soft-card tight",
-    style={"height": MAP_H}
+    style={"height": MAP_H, "paddingBottom": "18px"},
 )
 
 def kpi_card(title, idv):
     return html.Div(
         dbc.Card(
-            [html.Div(title, className="kpi-title"),
-             html.P(id=idv, children="—", className="kpi-value")],
+            [
+                html.Div(title, className="kpi-title"),
+                html.P(id=idv, children="—", className="kpi-value"),
+            ],
             className="soft-card tight h-100",
         ),
-        className="kpi-col"
+        className="kpi-col",
     )
 
-left_kpis = html.Div(
-    [kpi_card("Top Origin Market", "kpi-origin"),
-     kpi_card("Avg Hotel Occupancy","kpi-occ")],
-    className="kpi-row", style={"height": KPI_H}
-)
-
-right_kpis = html.Div(
-    [kpi_card("Total Visitors","kpi-visitors"),
-     kpi_card("Avg Spend / Visitor","kpi-spend"),
-     kpi_card("Peak Year", "kpi-peakyear"),
-     kpi_card("YoY Growth","kpi-yoy"),
-     kpi_card("Top Event","kpi-event"),
-     kpi_card("Top by Impact","kpi-impact")],
-    className="kpi-row", style={"height": KPI_H}
+kpi_row = html.Div(
+    [
+        kpi_card("Top Park (Month)", "kpi-top-park-month"),
+        kpi_card("Avg Visits / Park", "kpi-avg-park"),
+        kpi_card("Total Visitors (Month)", "kpi-total-month"),
+        kpi_card("Peak Year", "kpi-peak-year"),
+        kpi_card("YoY Growth vs Prev Year", "kpi-yoy"),
+        kpi_card("Top Park (Year)", "kpi-top-park-year"),
+        kpi_card("Active Parks (Month)", "kpi-active-parks"),
+    ],
+    className="kpi-row",
+    style={"height": KPI_H},
 )
 
 map_card = dbc.Card(
     dcc.Graph(
-        id="us-map", figure=init_map,
-        style={"height":"100%", "backgroundColor":"transparent"},
-        config={"displayModeBar": False}
+        id="us-map",
+        figure=init_map,
+        style={"height": "100%", "backgroundColor": "transparent"},
+        config={"displayModeBar": False},
     ),
     className="soft-card tight map-card",
-    style={"height": MAP_H}
+    style={"height": MAP_H},
 )
 
 heat_card = dbc.Card(
-    [html.Div("Seasonality Heatmap", className="kpi-title mb-1"),
-     dcc.Graph(id="heatmap", figure=init_heat, style={"height":"24vh"}, config={"displayModeBar": False})],
-    className="soft-card tight"
+    [
+        html.Div("Seasonality Heatmap (Region × Season)", className="kpi-title mb-1"),
+        dcc.Graph(
+            id="heatmap",
+            figure=init_heat,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card tight",
 )
+
 trend_card = dbc.Card(
-    [html.Div("Drilldown — Tourist Inflows (Latest Year)", className="kpi-title mb-1"),
-     dcc.Graph(id="trend", figure=init_trend, style={"height":"24vh"}, config={"displayModeBar": False})],
-    className="soft-card tight"
+    [
+        html.Div("Drilldown — Tourist Inflows (Year)", className="kpi-title mb-1"),
+        dcc.Graph(
+            id="trend",
+            figure=init_trend,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card tight",
 )
-pressure_card = dbc.Card(
-    [html.Div("Tourism Pressure (Visitors × Occupancy × Events)", className="kpi-title mb-1"),
-     dcc.Graph(id="pressure", figure=init_press, style={"height":"24vh"}, config={"displayModeBar": False})],
-    className="soft-card tight"
+
+bubble_card = dbc.Card(
+    [
+        html.Div("Top Park per Year (Area)", className="kpi-title mb-1"),
+        dcc.Graph(
+            id="top-park-year-chart",
+            figure=init_bubble,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card tight",
 )
-evt_card = dbc.Card(
-    [html.Div("Event Impact", className="kpi-title mb-1"),
-     dcc.Graph(id="evt", figure=init_evt, style={"height":"24vh"}, config={"displayModeBar": False})],
-    className="soft-card tight"
+
+top5_parks_card = dbc.Card(
+    [
+        html.Div("Top 5 Parks by Annual Visitors", className="kpi-title mb-1"),
+        dcc.Graph(
+            id="top5-parks",
+            figure=init_top5,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card tight",
 )
 
 # =========================
@@ -542,206 +774,127 @@ evt_card = dbc.Card(
 app.layout = dbc.Container(
     [
         dbc.Row(
-            [dbc.Col(html.Div("Tourist Flow & Seasonality Analyzer", className="section-title"), width=12)],
-            className="g-0", style={"height": "6vh", "marginTop": TITLE_TOP}
+            [
+                dbc.Col(
+                    html.Div("Tourist Flow & Seasonality Analyzer",
+                             className="section-title"),
+                    width=12,
+                )
+            ],
+            className="g-0",
+            style={"height": "6vh", "marginTop": TITLE_TOP},
         ),
         dbc.Row(
             [
                 dbc.Col(
-                    [sidebar_filters, html.Div(style={"height": ROW_GAP}), left_kpis],
+                    [sidebar_filters],
                     width=4,
-                    style={"display":"flex","flexDirection":"column","height": COLUMN_H}
+                    style={"display": "flex",
+                           "flexDirection": "column",
+                           "height": COLUMN_H},
                 ),
                 dbc.Col(
-                    [map_card, html.Div(style={"height": ROW_GAP}), right_kpis],
+                    [map_card],
                     width=8,
-                    style={"display":"flex","flexDirection":"column","height": COLUMN_H}
-                )
+                    style={"display": "flex",
+                           "flexDirection": "column",
+                           "height": COLUMN_H},
+                ),
             ],
-            className="gx-3 gy-0"
+            className="gx-3 gy-0",
+            # reduced gap between map row and mini-cards row
+            style={"marginBottom": "4px"},
         ),
         dbc.Row(
-            [dbc.Col(heat_card,     width=3),
-             dbc.Col(trend_card,    width=3),
-             dbc.Col(pressure_card, width=3),
-             dbc.Col(evt_card,      width=3)],
+            [dbc.Col(kpi_row, width=12)],
             className="gx-3 gy-0",
-            style={"height":"25vh", "marginTop": ROW_GAP}
+            # same gap between mini-cards row and charts row
+            style={"marginBottom": "11px"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(heat_card, width=3),
+                dbc.Col(trend_card, width=3),
+                dbc.Col(bubble_card, width=3),
+                dbc.Col(top5_parks_card, width=3),
+            ],
+            className="gx-3 gy-0",
         ),
     ],
-    fluid=True, className="dbc-container pb-3",
-    style={"height":"100vh","overflow":"hidden"}
+    fluid=True,
+    className="dbc-container pb-2",
+    style={"height": "100vh", "overflow": "hidden"},
 )
 
 # =========================
 #  CALLBACKS — FIGURES
 # =========================
 @app.callback(
-    [Output("us-map", "figure"),
-     Output("heatmap", "figure"),
-     Output("trend", "figure"),
-     Output("pressure", "figure"),
-     Output("evt", "figure")],
-    [Input("f-month", "value"),
-     Input("f-region", "value"),
-     Input("f-dest", "value"),
-     Input("f-event", "value")]
+    [
+        Output("us-map", "figure"),
+        Output("heatmap", "figure"),
+        Output("trend", "figure"),
+        Output("top-park-year-chart", "figure"),
+        Output("top5-parks", "figure"),
+    ],
+    [
+        Input("f-month", "value"),
+        Input("f-year", "value"),
+        Input("f-region", "value"),
+        Input("f-dest", "value"),
+        Input("f-park-type", "value"),
+    ],
 )
-def update_all(month_val, region_val, dest_val, event_val):
-    seed = (
-        int(month_val or 1) * 1000
-        + (hash(region_val) % 1000 if region_val else 0)
-        + (hash(dest_val) % 1000 if dest_val else 0)
-        + (hash(event_val) % 1000 if event_val else 0)
-    )
-    rng = np.random.default_rng(seed)
-
-    # MAP
-    dfm = df_map.copy()
-    if region_val and region_val != "All":
-        allowed = set(REGIONS.get(region_val, []))
-        sel_mask = dfm["state"].isin(allowed)
-    else:
-        sel_mask = np.ones(len(dfm), dtype=bool)
-
-    p_hot, p_nrm, p_off = 0.35, 0.45, 0.20
-    if dest_val == "National Park":
-        p_hot += 0.05; p_nrm -= 0.03; p_off -= 0.02
-    if event_val and event_val != "All":
-        p_hot += 0.03; p_nrm -= 0.02; p_off -= 0.01
-    tot = p_hot + p_nrm + p_off
-    probs = [p_hot/tot, p_nrm/tot, p_off/tot]
-
-    dfm.loc[sel_mask, "lift"] = rng.choice(
-        ["Hotspot", "Normal", "Off-Season"],
-        size=sel_mask.sum(),
-        p=probs
-    )
-    dfm.loc[~sel_mask, "lift"] = "Normal"
-    dfm["lift"] = pd.Categorical(dfm["lift"], categories=CATEGORY_ORDER["lift"], ordered=True)
-
-    
-    month_int = int(month_val or 1)
-
-    def get_hover_parks(row):
-        key = (month_int, row["state"], row["lift"])
-        parks = PARK_SEGMENTS.get(key, [])
-        if not parks:
-            return "No park data for this status"
-        return ", ".join(parks[:5])
-
-    dfm["hover_parks"] = dfm.apply(get_hover_parks, axis=1)
-
-    map_out = build_map(dfm)
-
-    # HEATMAP
-    heat_vals = rng.integers(30, 95, size=(4,4))
-    dfh = make_heat_df(heat_vals)
-    heat_out = build_heatmap(dfh)
-
-    # TREND
-    base = np.linspace(0.9, 1.6, 12) * 1_000_000
-    region_factor = (sel_mask.sum() / len(dfm))
-    month_bias = (int(month_val or 1) - 6) / 36.0
-    scale = 0.8 + 0.6*region_factor + month_bias
-    visits = np.round(base * max(0.5, scale), 0)
-    trend_out = build_trend(pd.DataFrame({"month": ALL_MONTHS, "visits": visits}))
-
-    # PRESSURE SCATTER
-    visitors_m = np.round(visits / 1_000_000, 2)
-    occ_pct = np.clip(
-        55 + 20*np.sin(np.linspace(0, 2*np.pi, 12)) + rng.normal(0, 4, 12),
-        40, 95
-    )
-    event_strength = np.clip(10 + rng.integers(0, 30, 12), 8, 40)
-    pressure_out = build_pressure_scatter(visitors_m, occ_pct, event_strength)
-
-    # EVENTS
-    ev = evt.copy()
-    ev["spike"] = np.clip(
-        ev["spike"] + rng.integers(-6, 7, len(ev)) + int(region_factor*5),
-        5, 60
-    )
-    evt_out = build_events(ev)
-
-    return map_out, heat_out, trend_out, pressure_out, evt_out
+def update_all(month_val, year_val, region_val, dest_val, park_type_val):
+    dfm = build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val)
+    map_out   = build_map(dfm)
+    heat_out  = build_heatmap_real(region_val, dest_val, year_val, park_type_val)
+    trend_out = build_trend_real(year_val, region_val, dest_val, park_type_val)
+    bubble_out = build_top_park_per_year_bubble(region_val, dest_val, park_type_val)
+    top5_out  = build_top5_parks(year_val, region_val, dest_val, park_type_val)
+    return map_out, heat_out, trend_out, bubble_out, top5_out
 
 # =========================
-#  CALLBACKS — KPIs (YoY color)
+#  CALLBACKS — KPIs
 # =========================
 @app.callback(
-    [Output("kpi-visitors","children"),
-     Output("kpi-spend","children"),
-     Output("kpi-occ","children"),
-     Output("kpi-yoy","children"),
-     Output("kpi-yoy","style"),
-     Output("kpi-event","children"),
-     Output("kpi-impact","children"),
-     Output("kpi-origin","children"),
-     Output("kpi-peakyear","children")],
-    [Input("f-month","value"),
-     Input("f-region","value"),
-     Input("f-dest","value"),
-     Input("f-event","value")]
+    [
+        Output("kpi-top-park-month", "children"),
+        Output("kpi-avg-park", "children"),
+        Output("kpi-total-month", "children"),
+        Output("kpi-peak-year", "children"),
+        Output("kpi-yoy", "children"),
+        Output("kpi-yoy", "style"),
+        Output("kpi-top-park-year", "children"),
+        Output("kpi-active-parks", "children"),
+    ],
+    [
+        Input("f-month", "value"),
+        Input("f-year", "value"),
+        Input("f-region", "value"),
+        Input("f-dest", "value"),
+        Input("f-park-type", "value"),
+    ],
 )
-def update_kpis(month_val, region_val, dest_val, event_val):
-    seed = (
-        int(month_val or 1) * 1000
-        + (hash(region_val) % 1000 if region_val else 0)
-        + (hash(dest_val) % 1000 if dest_val else 0)
-        + (hash(event_val) % 1000 if event_val else 0)
+def update_kpis(month_val, year_val, region_val, dest_val, park_type_val):
+    k = compute_kpis(month_val, year_val, region_val, dest_val, park_type_val)
+
+    yoy_text = f"{k['yoy_pct']:+.1f}%"
+    yoy_style = {"color": "#4ade80" if k["yoy_positive"] else "#f97373"}
+
+    return (
+        k["top_park_month"],
+        f"{k['avg_per_park']:,.0f}",
+        f"{k['total_month']:,.0f}",
+        str(k["peak_year"]),
+        yoy_text,
+        yoy_style,
+        k["top_park_year"],
+        str(k["active_parks"]),
     )
-    rng = np.random.default_rng(seed)
-
-    dfm = df_map.copy()
-    if region_val and region_val != "All":
-        allowed = set(REGIONS.get(region_val, []))
-        sel_mask = dfm["state"].isin(allowed)
-    else:
-        sel_mask = np.ones(len(dfm), dtype=bool)
-    region_factor = (sel_mask.sum() / len(dfm))
-
-    visitors_num = int(kpi_baseline["total_visitors"] * (0.6 + region_factor*0.8))
-    visitors = f"{visitors_num/1_000_000:.1f}M"
-    spend = f"${int(kpi_baseline['avg_spend'] * (0.85 + rng.random()*0.4))}"
-    occ = f"{int(50 + region_factor*30 + rng.random()*15)}%"
-
-    yoy_val = int(-5 + rng.random()*15)
-    yoy_text = f"{yoy_val}%"
-    yoy_style = {"color": "#4ade80"} if yoy_val >= 0 else {"color": "#f87171"}
-
-    top_event = evt.sample(1, random_state=rng.integers(0, 10_000))["event"].iloc[0]
-    dfm.loc[sel_mask, "lift"] = rng.choice(
-        ["Hotspot","Normal","Off-Season"],
-        size=sel_mask.sum(),
-        p=[0.35,0.45,0.20]
-    )
-    dfm.loc[~sel_mask, "lift"] = "Normal"
-    hot = dfm[dfm["lift"]=="Hotspot"]["state_name"]
-    top_impact = hot.sample(1, random_state=rng.integers(0, 10_000)).iloc[0] if not hot.empty else "—"
-    top_origin = ["California","Texas","Florida","New York","Illinois","Washington","Arizona","Colorado"][rng.integers(0,8)]
-
-    seasonal = np.array([0.8,0.85,0.95,1.05,1.15,1.25,1.30,1.20,1.00,0.95,0.90,0.85])
-    m_idx = (int(month_val or 1) - 1) % 12
-    month_mult = seasonal[m_idx]
-    dest_boost = 1.06 if dest_val == "National Park" else (1.02 if dest_val == "State" else 1.00)
-    event_boost = 1.03 if (event_val and event_val != "All") else 1.00
-    region_boost = 0.9 + 0.4*region_factor
-    year_noise = rng.normal(0.0, 0.06, size=len(YEARS))
-    year_trend = np.linspace(0.92, 1.08, len(YEARS))
-    visitors_year = (month_mult * dest_boost * event_boost * region_boost) * (1.0 + year_noise) * year_trend
-    peak_year = YEARS[int(np.argmax(visitors_year))]
-
-    return visitors, spend, occ, yoy_text, yoy_style, top_event, top_impact, top_origin, str(peak_year)
 
 # =========================
 #  RUN
 # =========================
-'''
 if __name__ == "__main__":
     app.run(debug=True)
-   ''' 
-    
-# for AWS   
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8050, debug=False)
