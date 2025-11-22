@@ -21,7 +21,7 @@ app.title = "Tourist Flow & Seasonality Analyzer"
 
 # ---- Layout tuning ----
 MAP_H     = "50vh"
-COLUMN_H  = "51vh"   # reduced from 56vh → FIXES GAP
+COLUMN_H  = "51vh"   
 KPI_H     = "11vh"
 CHART_H   = "20vh"
 TITLE_TOP = "4px"
@@ -250,12 +250,12 @@ def filter_parks(month_val=None, year_val=None, region_val=None,
         allowed = set(REGIONS.get(region_val, []))
         df = df[df["State"].isin(allowed)]
 
-    # Destination type – very simple logic
+    # Destination type
     if dest_val == "National Park":
         df = df[df["Park Type"].str.contains("National Park", case=False, na=False)]
     elif dest_val == "City":
         df = df[~df["Park Type"].str.contains("National Park", case=False, na=False)]
-    # dest_val == "State" → no extra filter
+    # dest_val == "State" 
 
     if park_type_val and park_type_val != "All":
         df = df[df["Park Type"] == park_type_val]
@@ -415,14 +415,12 @@ def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
         color_continuous_scale="Blues",
         aspect="auto",
         labels=dict(color="Visits"),
-        text_auto=False,  # numbers only in hover
+        text_auto=False,  
     )
     fig = _common_layout(fig)
     fig.update_layout(
         coloraxis_colorbar=dict(
             title="Visits",
-            tickfont=dict(color="#ffffff"),
-            titlefont=dict(color="#ffffff"),
         )
     )
     fig.update_xaxes(title="", type="category")
@@ -455,14 +453,14 @@ def build_top_park_per_year_bubble(region_val, dest_val, park_type_val):
         df_top = pd.DataFrame({"Year": [0], "Park": ["—"], "Recreation Visits": [0.0]})
     else:
         agg = df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"].sum()
-        # keep biggest park per year
+       
         top_per_year = (
             agg.sort_values(["Year", "Recreation Visits"], ascending=[True, False])
                .groupby("Year")
                .head(1)
         )
         df_top = top_per_year.sort_values("Year")
-        # only last 20 years to keep it readable
+     
         if len(df_top) > 20:
             df_top = df_top.tail(20)
 
@@ -518,7 +516,7 @@ def build_top5_parks(year_val, region_val, dest_val, park_type_val):
               .sort_values("Recreation Visits", ascending=False)
               .head(5)
         )
-        agg["short"] = agg["State"]  # show only state code on axis
+        agg["short"] = agg["State"]  
         parks = agg
 
     fig = go.Figure()
@@ -802,13 +800,11 @@ app.layout = dbc.Container(
                 ),
             ],
             className="gx-3 gy-0",
-            # reduced gap between map row and mini-cards row
             style={"marginBottom": "4px"},
         ),
         dbc.Row(
             [dbc.Col(kpi_row, width=12)],
             className="gx-3 gy-0",
-            # same gap between mini-cards row and charts row
             style={"marginBottom": "11px"},
         ),
         dbc.Row(
