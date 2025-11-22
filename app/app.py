@@ -894,3 +894,6 @@ def update_kpis(month_val, year_val, region_val, dest_val, park_type_val):
 # =========================
 if __name__ == "__main__":
     app.run(debug=True)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8050, debug=False)
