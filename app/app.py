@@ -22,7 +22,7 @@ app.title = "Tourist Flow & Seasonality Analyzer"
 
 MAP_H     = "48vh"
 KPI_H     = "48vh"
-CHART_H   = "28vh"   # slightly taller so 2 rows of charts fill the page
+CHART_H   = "26vh"
 
 COLOR_MAP = {
     "Hotspot": "#ef4444",
@@ -33,24 +33,24 @@ CATEGORY_ORDER = {"lift": ["Hotspot", "Normal", "Off-Season"]}
 
 MAP_BG   = "#223542"
 CORAL    = "#F88379"
-BUBBLE   = "#2aa7d6"   # aqua area / bubble color
+BUBBLE   = "#2aa7d6"
 
 # =========================
 #  GLOBAL HTML / CSS (THEME)
 # =========================
-app.index_string = f"""
+app.index_string = """
 <!DOCTYPE html>
 <html>
   <head>
-    {{%metas%}}
-    <title>{{%title%}}</title>
-    {{%favicon%}}
-    {{%css%}}
+    {%metas%}
+    <title>{%title%}</title>
+    {%favicon%}
+    {%css%}
     <style>
-    :root{{
+    :root{
         --bg1:#050716;
         --bg2:#0b0f1c;
-        --card:#070b18;
+        --card:#050811;
         --card2:#080d19;
         --border:rgba(148,163,253,.55);
         --glow:rgba(56,189,248,.22);
@@ -58,13 +58,13 @@ app.index_string = f"""
         --muted:#9fb3d9;
         --grid:rgba(234,242,246,.06);
         --accent:#a855f7;
-    }}
+    }
 
-    *{{
+    *{
         box-sizing:border-box;
-    }}
+    }
 
-    body, html{{
+    body, html{
         height:100%;
         margin:0;
         padding:0;
@@ -75,16 +75,16 @@ app.index_string = f"""
             linear-gradient(160deg, var(--bg1), var(--bg2));
         font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color:var(--text);
-    }}
+    }
 
-    .layout-root{{
+    .layout-root{
         display:flex;
         height:100vh;
         width:100vw;
-    }}
+    }
 
     /* ---- SIDEBAR ---- */
-    .sidebar {{
+    .sidebar {
         width:230px;
         height:100vh;
         background:linear-gradient(180deg,#050814,#050812);
@@ -93,23 +93,23 @@ app.index_string = f"""
         display:flex;
         flex-direction:column;
         gap:22px;
-    }}
+    }
 
-    .sidebar-logo{{
+    .sidebar-logo{
         font-weight:800;
         font-size:22px;
         letter-spacing:.18em;
         text-transform:uppercase;
         color:#e5e7ff;
-    }}
+    }
 
-    .sidebar-subtitle{{
+    .sidebar-subtitle{
         font-size:13px;
         color:var(--muted);
         line-height:1.4;
-    }}
+    }
 
-    .sidebar-nav .nav-link{{
+    .sidebar-nav .nav-link{
         border-radius:12px;
         margin-bottom:8px;
         padding:9px 11px;
@@ -120,55 +120,55 @@ app.index_string = f"""
         gap:8px;
         border:1px solid transparent;
         transition:.2s;
-    }}
+    }
 
-    .sidebar-nav .nav-link .dot{{
+    .sidebar-nav .nav-link .dot{
         width:7px;
         height:7px;
         border-radius:999px;
         background:rgba(148,163,184,.65);
-    }}
+    }
 
-    .sidebar-nav .nav-link:hover{{
+    .sidebar-nav .nav-link:hover{
         background:rgba(148,163,253,.12);
         border-color:rgba(148,163,253,.28);
-    }}
+    }
 
-    .sidebar-nav .nav-link.active{{
+    .sidebar-nav .nav-link.active{
         background:linear-gradient(135deg,#6366f1,#a855f7);
         color:white;
         border-color:transparent;
         box-shadow:0 0 18px rgba(129,140,248,.55);
-    }}
+    }
 
-    .sidebar-nav .nav-link.active .dot{{
+    .sidebar-nav .nav-link.active .dot{
         background:white;
-    }}
+    }
 
-    .sidebar-footer{{
+    .sidebar-footer{
         margin-top:auto;
         font-size:11px;
         color:var(--muted);
         opacity:.8;
-    }}
+    }
 
     /* ---- MAIN CONTENT ---- */
-    .content-wrapper{{
+    .content-wrapper{
         flex:1;
         padding:18px 22px 14px;
         overflow:hidden;
         display:flex;
         flex-direction:column;
-    }}
+    }
 
-    .page-body{{
+    .page-body{
         height:100%;
         display:flex;
         flex-direction:column;
         gap:16px;
-    }}
+    }
 
-    .header-card{{
+    .header-card{
         background:radial-gradient(circle at top left, rgba(129,140,248,.35), transparent 65%),
                    radial-gradient(circle at bottom right, rgba(45,212,191,.2), transparent 60%),
                    linear-gradient(135deg,rgba(8,11,24,.96),rgba(9,13,28,.94));
@@ -180,24 +180,24 @@ app.index_string = f"""
         align-items:center;
         justify-content:space-between;
         gap:18px;
-    }}
+    }
 
-    .page-title{{
+    .page-title{
         font-size:24px;
         font-weight:700;
         letter-spacing:.06em;
         text-transform:uppercase;
         color:#ffffff;
-    }}
+    }
 
-    .page-subtitle{{
+    .page-subtitle{
         font-size:13px;
         color:var(--muted);
         margin-top:4px;
         max-width:420px;
-    }}
+    }
 
-    .badge-chip{{
+    .badge-chip{
         font-size:12px;
         padding:5px 14px;
         border-radius:999px;
@@ -207,178 +207,178 @@ app.index_string = f"""
         align-items:center;
         gap:6px;
         box-shadow:0 0 18px rgba(56,189,248,.45);
-    }}
+    }
 
-    .badge-dot{{
+    .badge-dot{
         width:7px;
         height:7px;
         border-radius:999px;
         background:#22c55e;
         box-shadow:0 0 12px rgba(34,197,94,.8);
-    }}
+    }
 
     /* ---- CARDS ---- */
-    .soft-card{{
-        background:radial-gradient(circle at top left, rgba(15,23,42,.75), transparent 80%),
-                   linear-gradient(180deg,#070b18,#050814);
+    .soft-card{
+        /* slightly lighter than before */
+        background:linear-gradient(180deg,#070b18,#050811);
         border-radius:18px;
         border:1px solid var(--border);
         box-shadow:
-            0 0 22px var(--glow),
+            0 0 18px var(--glow),
             inset 0 1px 0 rgba(255,255,255,.04);
         padding:12px 14px;
-    }}
+    }
 
-    .filters-card{{
+    .filters-card{
         display:flex;
         flex-direction:column;
         gap:8px;
         margin-top:4px;
-    }}
+    }
 
-    .filters-title{{
+    .filters-title{
         font-size:12px;
         text-transform:uppercase;
         letter-spacing:.18em;
         color:#ffffff;
-    }}
+    }
 
-    .filters-row{{
+    .filters-row{
         display:grid;
         grid-template-columns:repeat(5, minmax(0, 1fr));
         gap:12px;
-    }}
+    }
 
-    .filter-label{{
+    .filter-label{
         font-size:11px;
         color:#ffffff;
         margin-bottom:4px;
         letter-spacing:.04em;
         text-transform:uppercase;
-    }}
+    }
 
     /* Dropdown styling */
-    .dash-dropdown .Select-control{{
+    .dash-dropdown .Select-control{
         background:rgba(5,10,24,.98) !important;
         border:1px solid var(--border) !important;
         border-radius:11px !important;
         min-height:34px;
         font-size:13px;
         color:#ffffff !important;
-    }}
-    .dash-dropdown .Select-value-label{{
+    }
+    .dash-dropdown .Select-value-label{
         color:#ffffff !important;
-    }}
-    .dash-dropdown .Select-placeholder{{
+    }
+    .dash-dropdown .Select-placeholder{
         color:#e5e7ff !important;
-    }}
-    .dash-dropdown .Select-menu-outer{{
+    }
+    .dash-dropdown .Select-menu-outer{
         background:rgba(5,10,24,.98) !important;
         border:1px solid rgba(148,163,253,.35) !important;
         color:#ffffff !important;
         z-index:9999;
-    }}
-    .dash-dropdown .Select-option{{
+    }
+    .dash-dropdown .Select-option{
         color:#ffffff !important;
-    }}
+    }
 
-    .main-row{{
+    .main-row{
         display:grid;
-        /* Left KPIs slightly wider so cards fit */
         grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.7fr);
         gap:20px;
         min-height:0;
         align-items:stretch;
-    }}
+    }
 
-    .map-card{{
-        height:{MAP_H};
-    }}
+    .map-card{
+        height:48vh;
+    }
 
-    .map-side-wrapper{{
+    .map-side-wrapper{
         display:flex;
         flex-direction:column;
         gap:12px;
-        height:100%;
-    }}
+        height:48vh;
+    }
 
-    .extra-map-kpi-row{{
+    .extra-map-kpi-row{
         display:grid;
         grid-template-columns:repeat(2, minmax(0, 1fr));
         gap:12px;
-    }}
+    }
 
-    .kpi-panel{{
+    .kpi-panel{
         display:flex;
         flex-direction:column;
-    }}
+    }
 
-    .kpi-row{{
-        /* 2 cards per row → 3 rows */
+    .kpi-row{
+        /* 2 mini-cards per row, 3 rows */
         display:grid;
         grid-template-columns:repeat(2, minmax(0, 1fr));
         gap:10px;
         margin-top:6px;
-    }}
+    }
 
-    .kpi-title{{
+    .kpi-title{
         font-size:11px;
         color:#ffffff;
         text-transform:uppercase;
         letter-spacing:.11em;
         margin-bottom:3px;
-    }}
+    }
 
-    .kpi-value{{
+    .kpi-value{
         font-size:20px;
         font-weight:600;
         line-height:1.3;
         color:#ffffff;
-    }}
+    }
 
-    .kpi-card-inner{{
+    .kpi-card-inner{
         padding:10px 12px;
         border-radius:14px;
-        background:linear-gradient(180deg,#0b1120,#050b15);
+        background:linear-gradient(180deg,#080f24,#050b15);
         border:1px solid var(--border);
         box-shadow:
-            0 0 20px var(--glow),
+            0 0 18px var(--glow),
             inset 0 1px 0 rgba(255,255,255,.04);
-    }}
+        min-height:70px; /* make all mini cards equal height */
+    }
 
-    .charts-grid{{
+    .charts-grid{
         display:grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap:14px;
         min-height:0;
-    }}
+    }
 
-    .chart-card{{
-        height:{CHART_H};
+    .chart-card{
+        height:26vh;
         display:flex;
         flex-direction:column;
-    }}
+    }
 
-    .chart-title{{
+    .chart-title{
         font-size:11px;
         color:#ffffff;
         text-transform:uppercase;
         letter-spacing:.11em;
         margin-bottom:4px;
-    }}
+    }
 
-    .js-plotly-plot .plotly, .main-svg{{
+    .js-plotly-plot .plotly, .main-svg{
         font-family:"Inter", system-ui, sans-serif !important;
-    }}
+    }
 
     </style>
   </head>
   <body>
-    {{%app_entry%}}
+    {%app_entry%}
     <footer>
-      {{%config%}}
-      {{%scripts%}}
-      {{%renderer%}}
+      {%config%}
+      {%scripts%}
+      {%renderer%}
     </footer>
   </body>
 </html>
@@ -426,13 +426,11 @@ parks_df["Recreation Visits"] = parks_df["Recreation Visits"].astype(float)
 if "Park Type" not in parks_df.columns:
     parks_df["Park Type"] = "Unknown"
 
-
 def map_region_group(state_code: str) -> str:
     for r, lst in REGIONS.items():
         if state_code in lst:
             return r
     return "Other"
-
 
 parks_df["RegionGroup"] = parks_df["State"].map(map_region_group)
 YEARS = sorted(parks_df["Year"].unique())
@@ -493,7 +491,6 @@ def classify_state_status(month_val, year_val, region_val, dest_val, park_type_v
 
     return status
 
-
 def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
     status_map = classify_state_status(month_val, year_val, region_val, dest_val, park_type_val)
 
@@ -529,7 +526,6 @@ def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
     df["hover_parks"] = hover
     return df
 
-
 def _common_layout(fig):
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
@@ -540,7 +536,6 @@ def _common_layout(fig):
     fig.update_xaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
     fig.update_yaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
     return fig
-
 
 def build_map(df):
     fig = px.choropleth(
@@ -594,7 +589,6 @@ def build_map(df):
 
     return fig
 
-
 def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
     if df.empty:
@@ -639,7 +633,6 @@ def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
     fig.update_yaxes(title="", type="category")
     return fig
 
-
 def build_trend_real(year_val, region_val, dest_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
     if df.empty:
@@ -652,14 +645,13 @@ def build_trend_real(year_val, region_val, dest_val, park_type_val):
     fig = px.line(dfl, x="MonthName", y="Visits", markers=True)
     fig = _common_layout(fig)
     fig.update_traces(line=dict(width=2))
+    fig.update_traces(line_color="#27a4d8")  # unify line color
     fig.update_xaxes(title="", showgrid=False)
     fig.update_yaxes(title="Tourist inflow", showgrid=False)
     return fig
 
-
-def build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val):
-    # Now respects MONTH + YEAR filters
-    df = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
+def build_top5_parks(year_val, region_val, dest_val, park_type_val):
+    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
     if df.empty:
         parks = pd.DataFrame({"Park": ["—"], "Recreation Visits": [0.0], "short": ["—"], "State": ["—"]})
     else:
@@ -693,46 +685,6 @@ def build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val):
     )
     return fig
 
-
-def build_top_states(year_val, region_val, dest_val, park_type_val):
-    """
-    NEW: Top Park per Year (Area chart style)
-    For each year, pick the park with highest visitors and plot area.
-    """
-    df = filter_parks(None, None, region_val, dest_val, park_type_val)
-    if df.empty:
-        yearly = pd.DataFrame({"Year": [0], "Recreation Visits": [0.0]})
-    else:
-        yearly_park = (
-            df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"]
-              .sum()
-        )
-        # take top park each year
-        yearly = (
-            yearly_park.sort_values("Recreation Visits", ascending=False)
-                       .groupby("Year", as_index=False)
-                       .first()
-                       .sort_values("Year")
-        )
-
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=yearly["Year"],
-            y=yearly["Recreation Visits"],
-            mode="lines",
-            fill="tozeroy",
-            line=dict(color=BUBBLE, width=2),
-            hovertemplate="<b>%{{x}}</b><br>Visits: %{{y:,.0f}}<extra></extra>",
-            showlegend=False,
-        )
-    )
-    fig = _common_layout(fig)
-    fig.update_xaxes(title="", showgrid=False)
-    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
-    return fig
-
-
 def build_yearly_trend(region_val, dest_val, park_type_val):
     df = filter_parks(None, None, region_val, dest_val, park_type_val)
     if df.empty:
@@ -746,46 +698,77 @@ def build_yearly_trend(region_val, dest_val, park_type_val):
 
     fig = px.line(yearly, x="Year", y="Recreation Visits", markers=True)
     fig = _common_layout(fig)
-    fig.update_traces(line=dict(width=2))
+    fig.update_traces(line=dict(width=2), line_color="#27a4d8")
     fig.update_xaxes(title="Year", showgrid=False)
     fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
     return fig
 
+# ---- NEW: TOP PARK PER YEAR (AREA CHART) ----
+def build_top_park_area(region_val, dest_val, park_type_val):
+    df = filter_parks(None, None, region_val, dest_val, park_type_val)
+    if df.empty:
+        yearly_top = pd.DataFrame({"Year": [0], "Visits": [0.0]})
+    else:
+        # total visits per park per year
+        yearly = (
+            df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"]
+              .sum()
+        )
+        # for each year pick the park with max visits
+        idx = yearly.groupby("Year")["Recreation Visits"].idxmax()
+        yearly_top = yearly.loc[idx, ["Year", "Recreation Visits"]].rename(
+            columns={"Recreation Visits": "Visits"}
+        ).sort_values("Year")
 
-def build_park_type_bar(year_val, region_val, dest_val, park_type_val):
-    """
-    NEW: Colorful bubble chart for park visits (per year)
-    """
+    fig = px.area(
+        yearly_top,
+        x="Year",
+        y="Visits",
+    )
+    fig = _common_layout(fig)
+    fig.update_traces(
+        line=dict(width=2, color="#27a4d8"),
+        fill="tozeroy",
+        fillcolor="rgba(39,164,216,0.45)"
+    )
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    fig.update_xaxes(title="", showgrid=False)
+    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.12)")
+    return fig
+
+# ---- NEW: BUBBLE CHART (TOP PARKS, YEAR) ----
+def build_bubble_chart(year_val, region_val, dest_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
     if df.empty:
         return _common_layout(go.Figure())
 
+    # aggregate by park for that year
     agg = (
-        df.groupby(["Park", "State", "RegionGroup"], as_index=False)["Recreation Visits"]
+        df.groupby(["State", "Park"], as_index=False)["Recreation Visits"]
           .sum()
           .sort_values("Recreation Visits", ascending=False)
-          .head(40)
+          .head(40)  # many points → more colourful
     )
     agg["StateName"] = agg["State"].map(STATE_NAME_MAP)
 
     fig = px.scatter(
         agg,
         x="StateName",
-        y="Park",
+        y="Recreation Visits",
         size="Recreation Visits",
-        color="RegionGroup",
-        size_max=40,
+        color="StateName",
         hover_name="Park",
-        hover_data={"StateName": True, "RegionGroup": True, "Recreation Visits": ":,.0f"},
+        size_max=40,
     )
     fig = _common_layout(fig)
-    fig.update_xaxes(title="State", showgrid=False)
-    fig.update_yaxes(title="", showgrid=False)
     fig.update_layout(
-        legend_title_text="Region",
         margin=dict(l=10, r=10, t=10, b=10),
-        hoverlabel=dict(bgcolor="rgba(5,10,24,.95)", font_color="#ffffff"),
+        showlegend=False,
     )
+    fig.update_xaxes(title="", showgrid=False)
+    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.12)")
     return fig
 
 # =========================
@@ -799,7 +782,6 @@ def fmt_millions(val: float) -> str:
     if val >= 1e3:
         return f"{val/1e3:.1f}K"
     return f"{val:.0f}"
-
 
 def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     month_int = int(month_val)
@@ -872,6 +854,52 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
         "top_state_year": top_state_year,
     }
 
+# ---- QUICK INSIGHTS (TEXT) ----
+def compute_quick_insights(month_val, year_val, region_val, dest_val, park_type_val):
+    df = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
+
+    if df.empty:
+        return [
+            "No data available for selected filters.",
+            "",
+            ""
+        ]
+
+    # 1 — Top State This Month
+    state_sum = df.groupby("State")["Recreation Visits"].sum()
+    top_state = state_sum.idxmax()
+    top_state_name = STATE_NAME_MAP.get(top_state, top_state)
+    top_visits = state_sum.max()
+    line1 = f"{top_state_name} leads this month with {fmt_millions(top_visits)} visitors."
+
+    # 2 — Seasonality Split (within selected year)
+    def month_to_season(m):
+        if m in [3, 4, 5]:
+            return "Spring"
+        if m in [6, 7, 8]:
+            return "Summer"
+        if m in [9, 10, 11]:
+            return "Fall"
+        return "Winter"
+
+    df["Season"] = df["Month"].apply(month_to_season)
+    season_pct = (
+        df.groupby("Season")["Recreation Visits"]
+          .sum()
+          .pipe(lambda s: s / s.sum() * 100)
+    )
+    top_season = season_pct.idxmax()
+    top_season_val = season_pct.max()
+    line2 = f"{top_season} accounts for {top_season_val:.1f}% of visits under current filters."
+
+    # 3 — YoY Growth Summary (reuse KPI logic)
+    k = compute_kpis(month_val, year_val, region_val, dest_val, park_type_val)
+    yoy_pct = k["yoy_pct"]
+    yoy_word = "growth" if yoy_pct >= 0 else "decline"
+    line3 = f"Year-on-year {yoy_word} vs previous year is {yoy_pct:+.1f}%."
+
+    return [line1, line2, line3]
+
 # =========================
 #  INITIAL FIGURES
 # =========================
@@ -882,10 +910,10 @@ df_map_init  = build_base_map_df(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "A
 init_map     = build_map(df_map_init)
 init_heat    = build_heatmap_real("All", "State", DEFAULT_YEAR, "All")
 init_trend   = build_trend_real(DEFAULT_YEAR, "All", "State", "All")
-init_top5    = build_top5_parks(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_top_states = build_top_states(DEFAULT_YEAR, "All", "State", "All")
+init_top5    = build_top5_parks(DEFAULT_YEAR, "All", "State", "All")
 init_yearly  = build_yearly_trend("All", "State", "All")
-init_ptype   = build_park_type_bar(DEFAULT_YEAR, "All", "State", "All")
+init_top_area = build_top_park_area("All", "State", "All")
+init_bubble  = build_bubble_chart(DEFAULT_YEAR, "All", "State", "All")
 kpi0         = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
 
 # =========================
@@ -982,7 +1010,6 @@ def filter_dropdowns_card():
         className="soft-card filters-card",
     )
 
-
 def kpi_card(title, idv):
     return html.Div(
         dbc.Card(
@@ -993,7 +1020,6 @@ def kpi_card(title, idv):
             className="kpi-card-inner",
         )
     )
-
 
 def extra_kpi_card(title, idv):
     return html.Div(
@@ -1006,7 +1032,7 @@ def extra_kpi_card(title, idv):
         )
     )
 
-# 6 mini cards on left
+# LEFT COLUMN: key signals + key findings text
 kpi_panel = dbc.Card(
     [
         html.Div("Key Signals", className="kpi-title"),
@@ -1020,6 +1046,14 @@ kpi_panel = dbc.Card(
                 kpi_card("Top Park (Year)", "kpi-top-park-year"),
             ],
             className="kpi-row",
+        ),
+        html.Div(
+            [
+                html.Div("Key Findings", className="kpi-title", style={"marginTop": "10px"}),
+                html.Div(id="quick-insights-line1", className="kpi-value", style={"fontSize": "15px"}),
+                html.Div(id="quick-insights-line2", className="kpi-value", style={"fontSize": "15px"}),
+                html.Div(id="quick-insights-line3", className="kpi-value", style={"fontSize": "15px"}),
+            ]
         ),
     ],
     className="soft-card kpi-panel",
@@ -1064,7 +1098,7 @@ trend_card = dbc.Card(
 
 top5_parks_card = dbc.Card(
     [
-        html.Div("Top 5 Parks (Month)", className="chart-title"),
+        html.Div("Top 5 Parks", className="chart-title"),
         dcc.Graph(
             id="top5-parks-analytics",
             figure=init_top5,
@@ -1075,12 +1109,12 @@ top5_parks_card = dbc.Card(
     className="soft-card chart-card",
 )
 
-top_states_card = dbc.Card(
+top_area_card = dbc.Card(
     [
         html.Div("Top Park per Year (Area)", className="chart-title"),
         dcc.Graph(
-            id="top-states-analytics",
-            figure=init_top_states,
+            id="top-park-area-analytics",
+            figure=init_top_area,
             style={"height": CHART_H},
             config={"displayModeBar": False},
         ),
@@ -1101,12 +1135,12 @@ yearly_card = dbc.Card(
     className="soft-card chart-card",
 )
 
-park_type_card = dbc.Card(
+bubble_card = dbc.Card(
     [
-        html.Div("Park Visits Bubble Chart", className="chart-title"),
+        html.Div("Top Parks Bubble (Year)", className="chart-title"),
         dcc.Graph(
-            id="park-type-analytics",
-            figure=init_ptype,
+            id="bubble-analytics",
+            figure=init_bubble,
             style={"height": CHART_H},
             config={"displayModeBar": False},
         ),
@@ -1173,7 +1207,6 @@ def dashboard_layout():
         className="page-body",
     )
 
-
 def analytics_layout():
     return html.Div(
         [
@@ -1200,16 +1233,15 @@ def analytics_layout():
                     heat_card,
                     trend_card,
                     top5_parks_card,
-                    top_states_card,
+                    top_area_card,   # area chart instead of top 10 states
                     yearly_card,
-                    park_type_card,
+                    bubble_card,     # bubble chart instead of park-type bar
                 ],
                 className="charts-grid",
             ),
         ],
         className="page-body",
     )
-
 
 def reports_layout():
     return dbc.Container(
@@ -1229,13 +1261,12 @@ def reports_layout():
         style={"height": "100vh", "overflow": "hidden"},
     )
 
-
 def settings_layout():
     return dbc.Container(
         dbc.Card(
             [
                 html.H3("Settings", className="kpi-title mb-2"),
-            html.P(
+                html.P(
                     "Space for theme toggles, default filters and user preferences.",
                     style={"FontSize": "14px"},
                 ),
@@ -1346,9 +1377,9 @@ def update_map(month_val, year_val, region_val, dest_val, park_type_val):
         Output("heatmap-analytics", "figure"),
         Output("trend-analytics", "figure"),
         Output("top5-parks-analytics", "figure"),
-        Output("top-states-analytics", "figure"),
+        Output("top-park-area-analytics", "figure"),
         Output("yearly-analytics", "figure"),
-        Output("park-type-analytics", "figure"),
+        Output("bubble-analytics", "figure"),
     ],
     [
         Input("f-month", "value"),
@@ -1361,14 +1392,14 @@ def update_map(month_val, year_val, region_val, dest_val, park_type_val):
 def update_analytics_charts(month_val, year_val, region_val, dest_val, park_type_val):
     heat_out   = build_heatmap_real(region_val, dest_val, year_val, park_type_val)
     trend_out  = build_trend_real(year_val, region_val, dest_val, park_type_val)
-    top5_out   = build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val)
-    states_out = build_top_states(year_val, region_val, dest_val, park_type_val)
+    top5_out   = build_top5_parks(year_val, region_val, dest_val, park_type_val)
+    area_out   = build_top_park_area(region_val, dest_val, park_type_val)
     yearly_out = build_yearly_trend(region_val, dest_val, park_type_val)
-    ptype_out  = build_park_type_bar(year_val, region_val, dest_val, park_type_val)
-    return heat_out, trend_out, top5_out, states_out, yearly_out, ptype_out
+    bubble_out = build_bubble_chart(year_val, region_val, dest_val, park_type_val)
+    return heat_out, trend_out, top5_out, area_out, yearly_out, bubble_out
 
 # =========================
-#  CALLBACKS — KPIs
+#  CALLBACKS — KPIs + KEY FINDINGS
 # =========================
 @app.callback(
     [
@@ -1405,6 +1436,24 @@ def update_kpis(month_val, year_val, region_val, dest_val, park_type_val):
         fmt_millions(k["total_year"]),
         k["top_state_year"],
     )
+
+@app.callback(
+    [
+        Output("quick-insights-line1", "children"),
+        Output("quick-insights-line2", "children"),
+        Output("quick-insights-line3", "children"),
+    ],
+    [
+        Input("f-month", "value"),
+        Input("f-year", "value"),
+        Input("f-region", "value"),
+        Input("f-dest", "value"),
+        Input("f-park-type", "value"),
+    ],
+)
+def update_key_findings(month_val, year_val, region_val, dest_val, park_type_val):
+    lines = compute_quick_insights(month_val, year_val, region_val, dest_val, park_type_val)
+    return lines[0], lines[1], lines[2]
 
 # =========================
 #  RUN
