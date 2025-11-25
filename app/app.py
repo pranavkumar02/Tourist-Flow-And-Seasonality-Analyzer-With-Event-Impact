@@ -1,16 +1,17 @@
-import os
 import math
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
 from dash import Dash, html, dcc
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
 # =========================
-#  APP & THEME
+#  APP SETUP
 # =========================
 app = Dash(
     __name__,
@@ -19,12 +20,9 @@ app = Dash(
 )
 app.title = "Tourist Flow & Seasonality Analyzer"
 
-# ---- Layout tuning ----
-MAP_H     = "50vh"
-COLUMN_H  = "51vh"   
-KPI_H     = "11vh"
-CHART_H   = "20vh"
-TITLE_TOP = "4px"
+MAP_H     = "48vh"
+KPI_H     = "48vh"
+CHART_H   = "28vh"   # slightly taller so 2 rows of charts fill the page
 
 COLOR_MAP = {
     "Hotspot": "#ef4444",
@@ -32,155 +30,362 @@ COLOR_MAP = {
     "Off-Season": "#f59e0b",
 }
 CATEGORY_ORDER = {"lift": ["Hotspot", "Normal", "Off-Season"]}
+
 MAP_BG   = "#223542"
-CORAL    = "#F88379"   # Top-5 bar color
-BUBBLE   = "#2aa7d6"   # area chart color
+CORAL    = "#F88379"
+BUBBLE   = "#2aa7d6"   # aqua area / bubble color
 
 # =========================
-#  PAGE SHELL / CSS
+#  GLOBAL HTML / CSS (THEME)
 # =========================
-app.index_string = """
+app.index_string = f"""
 <!DOCTYPE html>
 <html>
   <head>
-    {%metas%}
-    <title>{%title%}</title>
-    {%favicon%}
-    {%css%}
+    {{%metas%}}
+    <title>{{%title%}}</title>
+    {{%favicon%}}
+    {{%css%}}
     <style>
-      :root{
-        --bg1:#0e2b34; --bg2:#233b45;
-        --panel:#263d49; --panel-2:#223542;
-        --border:rgba(255,255,255,.12);
-        --shadow-dark:rgba(6,14,18,.65);
-        --shadow-light:rgba(255,255,255,.07);
-        --glow:rgba(56,189,248,.18);
-        --text:#ffffff; --muted:#cfe1ea;
-        --grid:rgba(234,242,246,.045);
-      }
+    :root{{
+        --bg1:#050716;
+        --bg2:#0b0f1c;
+        --card:#070b18;
+        --card2:#080d19;
+        --border:rgba(148,163,253,.55);
+        --glow:rgba(56,189,248,.22);
+        --text:#f7f7ff;
+        --muted:#9fb3d9;
+        --grid:rgba(234,242,246,.06);
+        --accent:#a855f7;
+    }}
 
-      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap');
+    *{{
+        box-sizing:border-box;
+    }}
 
-      html, body{
-        height:100%; margin:0; overflow:hidden;
+    body, html{{
+        height:100%;
+        margin:0;
+        padding:0;
+        overflow:hidden;
         background:
-          radial-gradient(1100px 540px at 18% 8%, rgba(108,209,255,.08), transparent 60%),
-          radial-gradient(900px 420px at 85% 0%, rgba(108,209,255,.06), transparent 55%),
-          linear-gradient(135deg, var(--bg1), var(--bg2));
+            radial-gradient(900px 500px at 15% 0%, rgba(94,234,212,.12), transparent 65%),
+            radial-gradient(900px 600px at 85% 0%, rgba(129,140,248,.15), transparent 65%),
+            linear-gradient(160deg, var(--bg1), var(--bg2));
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         color:var(--text);
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-      }
+    }}
 
-      .dbc-container{
-        background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.03));
-        border-radius:22px;
-        box-shadow:
-          24px 24px 44px var(--shadow-dark),
-          -10px -10px 18px var(--shadow-light),
-          inset 0 1px 0 rgba(255,255,255,.06),
-          0 0 22px var(--glow);
-        padding:10px 12px 12px 12px;
-      }
+    .layout-root{{
+        display:flex;
+        height:100vh;
+        width:100vw;
+    }}
 
-      .soft-card{
+    /* ---- SIDEBAR ---- */
+    .sidebar {{
+        width:230px;
+        height:100vh;
+        background:linear-gradient(180deg,#050814,#050812);
+        padding:24px 18px 18px;
+        border-right:1px solid rgba(255,255,255,.06);
+        display:flex;
+        flex-direction:column;
+        gap:22px;
+    }}
+
+    .sidebar-logo{{
+        font-weight:800;
+        font-size:22px;
+        letter-spacing:.18em;
+        text-transform:uppercase;
+        color:#e5e7ff;
+    }}
+
+    .sidebar-subtitle{{
+        font-size:13px;
+        color:var(--muted);
+        line-height:1.4;
+    }}
+
+    .sidebar-nav .nav-link{{
+        border-radius:12px;
+        margin-bottom:8px;
+        padding:9px 11px;
+        font-size:14px;
+        color:#c7d2fe;
+        display:flex;
+        align-items:center;
+        gap:8px;
+        border:1px solid transparent;
+        transition:.2s;
+    }}
+
+    .sidebar-nav .nav-link .dot{{
+        width:7px;
+        height:7px;
+        border-radius:999px;
+        background:rgba(148,163,184,.65);
+    }}
+
+    .sidebar-nav .nav-link:hover{{
+        background:rgba(148,163,253,.12);
+        border-color:rgba(148,163,253,.28);
+    }}
+
+    .sidebar-nav .nav-link.active{{
+        background:linear-gradient(135deg,#6366f1,#a855f7);
+        color:white;
+        border-color:transparent;
+        box-shadow:0 0 18px rgba(129,140,248,.55);
+    }}
+
+    .sidebar-nav .nav-link.active .dot{{
+        background:white;
+    }}
+
+    .sidebar-footer{{
+        margin-top:auto;
+        font-size:11px;
+        color:var(--muted);
+        opacity:.8;
+    }}
+
+    /* ---- MAIN CONTENT ---- */
+    .content-wrapper{{
+        flex:1;
+        padding:18px 22px 14px;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+    }}
+
+    .page-body{{
+        height:100%;
+        display:flex;
+        flex-direction:column;
+        gap:16px;
+    }}
+
+    .header-card{{
+        background:radial-gradient(circle at top left, rgba(129,140,248,.35), transparent 65%),
+                   radial-gradient(circle at bottom right, rgba(45,212,191,.2), transparent 60%),
+                   linear-gradient(135deg,rgba(8,11,24,.96),rgba(9,13,28,.94));
+        border-radius:20px;
+        padding:14px 18px;
+        border:1px solid rgba(148,163,253,.7);
+        box-shadow:0 0 35px rgba(56,189,248,.35);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:18px;
+    }}
+
+    .page-title{{
+        font-size:24px;
+        font-weight:700;
+        letter-spacing:.06em;
+        text-transform:uppercase;
+        color:#ffffff;
+    }}
+
+    .page-subtitle{{
+        font-size:13px;
+        color:var(--muted);
+        margin-top:4px;
+        max-width:420px;
+    }}
+
+    .badge-chip{{
+        font-size:12px;
+        padding:5px 14px;
+        border-radius:999px;
+        background:rgba(5,10,24,.9);
+        border:1px solid rgba(148,163,253,.5);
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        box-shadow:0 0 18px rgba(56,189,248,.45);
+    }}
+
+    .badge-dot{{
+        width:7px;
+        height:7px;
+        border-radius:999px;
+        background:#22c55e;
+        box-shadow:0 0 12px rgba(34,197,94,.8);
+    }}
+
+    /* ---- CARDS ---- */
+    .soft-card{{
+        background:radial-gradient(circle at top left, rgba(15,23,42,.75), transparent 80%),
+                   linear-gradient(180deg,#070b18,#050814);
         border-radius:18px;
-        background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
         border:1px solid var(--border);
         box-shadow:
-          16px 18px 30px var(--shadow-dark),
-          -8px -8px 16px var(--shadow-light),
-          inset 0 1px 0 rgba(255,255,255,.04),
-          0 0 14px var(--glow);
-      }
-      .tight{ padding:12px 14px; }
+            0 0 22px var(--glow),
+            inset 0 1px 0 rgba(255,255,255,.04);
+        padding:12px 14px;
+    }}
 
-      .map-card{
-        background:
-          radial-gradient(900px 420px at 50% 28%, #2c4654 0%, var(--panel-2) 70%),
-          linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    .filters-card{{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        margin-top:4px;
+    }}
+
+    .filters-title{{
+        font-size:12px;
+        text-transform:uppercase;
+        letter-spacing:.18em;
+        color:#ffffff;
+    }}
+
+    .filters-row{{
+        display:grid;
+        grid-template-columns:repeat(5, minmax(0, 1fr));
+        gap:12px;
+    }}
+
+    .filter-label{{
+        font-size:11px;
+        color:#ffffff;
+        margin-bottom:4px;
+        letter-spacing:.04em;
+        text-transform:uppercase;
+    }}
+
+    /* Dropdown styling */
+    .dash-dropdown .Select-control{{
+        background:rgba(5,10,24,.98) !important;
+        border:1px solid var(--border) !important;
+        border-radius:11px !important;
+        min-height:34px;
+        font-size:13px;
+        color:#ffffff !important;
+    }}
+    .dash-dropdown .Select-value-label{{
+        color:#ffffff !important;
+    }}
+    .dash-dropdown .Select-placeholder{{
+        color:#e5e7ff !important;
+    }}
+    .dash-dropdown .Select-menu-outer{{
+        background:rgba(5,10,24,.98) !important;
+        border:1px solid rgba(148,163,253,.35) !important;
+        color:#ffffff !important;
+        z-index:9999;
+    }}
+    .dash-dropdown .Select-option{{
+        color:#ffffff !important;
+    }}
+
+    .main-row{{
+        display:grid;
+        /* Left KPIs slightly wider so cards fit */
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.7fr);
+        gap:20px;
+        min-height:0;
+        align-items:stretch;
+    }}
+
+    .map-card{{
+        height:{MAP_H};
+    }}
+
+    .map-side-wrapper{{
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        height:100%;
+    }}
+
+    .extra-map-kpi-row{{
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:12px;
+    }}
+
+    .kpi-panel{{
+        display:flex;
+        flex-direction:column;
+    }}
+
+    .kpi-row{{
+        /* 2 cards per row → 3 rows */
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:10px;
+        margin-top:6px;
+    }}
+
+    .kpi-title{{
+        font-size:11px;
+        color:#ffffff;
+        text-transform:uppercase;
+        letter-spacing:.11em;
+        margin-bottom:3px;
+    }}
+
+    .kpi-value{{
+        font-size:20px;
+        font-weight:600;
+        line-height:1.3;
+        color:#ffffff;
+    }}
+
+    .kpi-card-inner{{
+        padding:10px 12px;
+        border-radius:14px;
+        background:linear-gradient(180deg,#0b1120,#050b15);
+        border:1px solid var(--border);
         box-shadow:
-          inset 0 1px 0 rgba(255,255,255,.06),
-          16px 18px 30px var(--shadow-dark),
-          -8px -8px 16px var(--shadow-light),
-          0 0 14px var(--glow);
-      }
+            0 0 20px var(--glow),
+            inset 0 1px 0 rgba(255,255,255,.04);
+    }}
 
-      .section-title{
-        width:100%;
-        font-family:"Playfair Display", serif;
-        font-size:36px; font-weight:700; letter-spacing:.4px;
-        text-align:center;
-        background: linear-gradient(180deg,#ffffff,#cfe9ff);
-        -webkit-background-clip:text; background-clip:text;
-        color:transparent;
-        text-shadow:0 2px 3px rgba(0,0,0,.35);
-        margin:0;
-        transform: translateY(-4px);
-      }
+    .charts-grid{{
+        display:grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap:14px;
+        min-height:0;
+    }}
 
-      .kpi-title{font-size:12px; color:#ffffff; margin-bottom:6px;}
-      .kpi-value{font-weight:700; font-size:22px; margin:0; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-      .kpi-row{display:flex; gap:12px; width:100%;}
-      .kpi-col{flex:1 1 0; max-width:none; display:flex;}
-      .kpi-col>.card{width:100%;}
+    .chart-card{{
+        height:{CHART_H};
+        display:flex;
+        flex-direction:column;
+    }}
 
-      /* Dropdown styling */
-      .dash-dropdown .Select-control, .Select-control{
-        background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%) !important;
-        border:1px solid var(--border) !important;
-        border-radius:10px !important;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.04) !important;
-        color:#ffffff !important;
-      }
-      .dash-dropdown .Select-value-label,
-      .dash-dropdown .Select-placeholder,
-      .dash-dropdown .Select-input > input,
-      .Select-value-label, .Select-placeholder, .Select-input > input{
-        color:#ffffff !important;
-      }
+    .chart-title{{
+        font-size:11px;
+        color:#ffffff;
+        text-transform:uppercase;
+        letter-spacing:.11em;
+        margin-bottom:4px;
+    }}
 
-      /* MAKE MENU SHORTER & SCROLLABLE */
-      .dash-dropdown .Select-menu-outer,
-      .Select-menu-outer{
-        background:var(--panel) !important;
-        border:1px solid var(--border) !important;
-        max-height:200px !important;
-        overflow-y:auto !important;
-        z-index:9999 !important;
-      }
+    .js-plotly-plot .plotly, .main-svg{{
+        font-family:"Inter", system-ui, sans-serif !important;
+    }}
 
-      .dash-dropdown .Select-menu-outer .Select-option,
-      .Select-menu-outer .Select-option,
-      .VirtualizedSelectOption,
-      .Select-option{
-        color:#ffffff !important; background:transparent !important;
-      }
-      .dash-dropdown .Select-menu-outer .Select-option.is-focused,
-      .Select-menu-outer .Select-option.is-focused,
-      .VirtualizedSelectFocusedOption{
-        background:rgba(255,255,255,.12) !important; color:#ffffff !important;
-      }
-      .dash-dropdown .Select-arrow, .dash-dropdown .Select-clear-zone,
-      .Select-arrow, .Select-clear-zone{ color:#ffffff !important; fill:#ffffff !important; }
-
-      .js-plotly-plot .plotly, .main-svg{
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif !important;
-      }
     </style>
   </head>
   <body>
-    {%app_entry%}
+    {{%app_entry%}}
     <footer>
-      {%config%}
-      {%scripts%}
-      {%renderer%}
+      {{%config%}}
+      {{%scripts%}}
+      {{%renderer%}}
     </footer>
   </body>
 </html>
 """
 
 # =========================
-#  DATA LOADING
+#  DATA LOADING (CSV)
 # =========================
 np.random.seed(7)
 
@@ -209,7 +414,6 @@ REGIONS = {
 ALL_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 PARKS_CSV_PATH = Path(__file__).parent / "all_parks_recreation_visits.csv"
-
 parks_df = pd.read_csv(PARKS_CSV_PATH)
 
 parks_df = parks_df.dropna(subset=["State", "Park", "Month", "Year", "Recreation Visits"])
@@ -222,14 +426,15 @@ parks_df["Recreation Visits"] = parks_df["Recreation Visits"].astype(float)
 if "Park Type" not in parks_df.columns:
     parks_df["Park Type"] = "Unknown"
 
+
 def map_region_group(state_code: str) -> str:
     for r, lst in REGIONS.items():
         if state_code in lst:
             return r
     return "Other"
 
-parks_df["RegionGroup"] = parks_df["State"].map(map_region_group)
 
+parks_df["RegionGroup"] = parks_df["State"].map(map_region_group)
 YEARS = sorted(parks_df["Year"].unique())
 LATEST_YEAR = max(YEARS)
 
@@ -250,12 +455,10 @@ def filter_parks(month_val=None, year_val=None, region_val=None,
         allowed = set(REGIONS.get(region_val, []))
         df = df[df["State"].isin(allowed)]
 
-    # Destination type
     if dest_val == "National Park":
         df = df[df["Park Type"].str.contains("National Park", case=False, na=False)]
     elif dest_val == "City":
         df = df[~df["Park Type"].str.contains("National Park", case=False, na=False)]
-    # dest_val == "State" 
 
     if park_type_val and park_type_val != "All":
         df = df[df["Park Type"] == park_type_val]
@@ -289,6 +492,7 @@ def classify_state_status(month_val, year_val, region_val, dest_val, park_type_v
         status.setdefault(s, "Normal")
 
     return status
+
 
 def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
     status_map = classify_state_status(month_val, year_val, region_val, dest_val, park_type_val)
@@ -325,6 +529,7 @@ def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
     df["hover_parks"] = hover
     return df
 
+
 def _common_layout(fig):
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
@@ -335,6 +540,7 @@ def _common_layout(fig):
     fig.update_xaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
     fig.update_yaxes(gridcolor="var(--grid)", zeroline=False, showline=False)
     return fig
+
 
 def build_map(df):
     fig = px.choropleth(
@@ -351,14 +557,15 @@ def build_map(df):
                     "lift": True, "hover_parks": False},
         labels={"lift": "Status"},
     )
+
     fig.update_layout(
-        paper_bgcolor=MAP_BG,
-        plot_bgcolor=MAP_BG,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         geo=dict(
-            bgcolor=MAP_BG,
+            bgcolor="rgba(0,0,0,0)",
             showlakes=False,
             showland=True,
-            landcolor=MAP_BG,
+            landcolor="#050811",
         ),
         legend=dict(
             title="Status",
@@ -367,12 +574,16 @@ def build_map(df):
             yanchor="top",
             x=0.98,
             xanchor="right",
-            bgcolor="rgba(0,0,0,0)",
+            bgcolor="rgba(5,10,24,.9)",
             font=dict(color="#ffffff"),
         ),
         margin=dict(l=0, r=0, t=0, b=0),
-        hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"),
+        hoverlabel=dict(
+            bgcolor="rgba(5,10,24,.95)",
+            font_color="#ffffff",
+        ),
     )
+
     fig.update_traces(
         hovertemplate=(
             "<b>%{customdata[1]}</b>"
@@ -380,11 +591,12 @@ def build_map(df):
             "<br>Top parks: %{customdata[2]}<extra></extra>"
         )
     )
+
     return fig
+
 
 def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
-
     if df.empty:
         order_regions = ["East Coast", "Mountain", "South", "West"]
         seasons = ["Spring", "Summer", "Fall", "Winter"]
@@ -415,7 +627,7 @@ def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
         color_continuous_scale="Blues",
         aspect="auto",
         labels=dict(color="Visits"),
-        text_auto=False,  
+        text_auto=False,
     )
     fig = _common_layout(fig)
     fig.update_layout(
@@ -426,6 +638,7 @@ def build_heatmap_real(region_val, dest_val, year_val, park_type_val):
     fig.update_xaxes(title="", type="category")
     fig.update_yaxes(title="", type="category")
     return fig
+
 
 def build_trend_real(year_val, region_val, dest_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
@@ -440,73 +653,13 @@ def build_trend_real(year_val, region_val, dest_val, park_type_val):
     fig = _common_layout(fig)
     fig.update_traces(line=dict(width=2))
     fig.update_xaxes(title="", showgrid=False)
-    fig.update_yaxes(title="Tourist inflows", showgrid=False)
+    fig.update_yaxes(title="Tourist inflow", showgrid=False)
     return fig
 
-def build_top_park_per_year_bubble(region_val, dest_val, park_type_val):
-    """
-    AREA chart: each point = TOP park of that year.
-    x = Year, y = Visits, filled to zero.
-    """
-    df = filter_parks(None, None, region_val, dest_val, park_type_val)
-    if df.empty:
-        df_top = pd.DataFrame({"Year": [0], "Park": ["—"], "Recreation Visits": [0.0]})
-    else:
-        agg = df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"].sum()
-       
-        top_per_year = (
-            agg.sort_values(["Year", "Recreation Visits"], ascending=[True, False])
-               .groupby("Year")
-               .head(1)
-        )
-        df_top = top_per_year.sort_values("Year")
-     
-        if len(df_top) > 20:
-            df_top = df_top.tail(20)
 
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatter(
-            x=df_top["Year"],
-            y=df_top["Recreation Visits"],
-            mode="lines",
-            fill="tozeroy",
-            line=dict(color=BUBBLE, width=2),
-            hovertext=df_top["Park"],
-            hovertemplate="<b>%{hovertext}</b><br>Year: %{x}<br>Visits: %{y:,.0f}<extra></extra>",
-        )
-    )
-    fig = _common_layout(fig)
-    fig.update_xaxes(title="Year", showgrid=False)
-    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
-    return fig
-
-def shorten_park_label(name: str) -> str:
-    if not isinstance(name, str):
-        return str(name)
-    repl = {
-        "National Historical Park": "NHP",
-        "National Historic Site": "NHS",
-        "National Historic": "NH",
-        "National Recreation Area": "NRA",
-        "National Recreation": "NR",
-        "National Seashore": "NSH",
-        "National Monument": "NM",
-        "National Park": "NP",
-        "Memorial": "MEM",
-        "Parkway": "PKWY",
-    }
-    s = name
-    for k, v in repl.items():
-        s = s.replace(k, v)
-    s = s.strip()
-    if len(s) > 26:
-        s = s[:23] + "..."
-    return s
-
-def build_top5_parks(year_val, region_val, dest_val, park_type_val):
-    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
-
+def build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val):
+    # Now respects MONTH + YEAR filters
+    df = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
     if df.empty:
         parks = pd.DataFrame({"Park": ["—"], "Recreation Visits": [0.0], "short": ["—"], "State": ["—"]})
     else:
@@ -516,7 +669,7 @@ def build_top5_parks(year_val, region_val, dest_val, park_type_val):
               .sort_values("Recreation Visits", ascending=False)
               .head(5)
         )
-        agg["short"] = agg["State"]  
+        agg["short"] = agg["State"]
         parks = agg
 
     fig = go.Figure()
@@ -536,23 +689,126 @@ def build_top5_parks(year_val, region_val, dest_val, park_type_val):
     fig.update_yaxes(title="State", showgrid=False)
     fig.update_layout(
         margin=dict(l=10, r=10, t=10, b=10),
-        hoverlabel=dict(bgcolor="rgba(10,20,25,.9)", font_color="#ffffff"),
+        hoverlabel=dict(bgcolor="rgba(5,10,24,.95)", font_color="#ffffff"),
+    )
+    return fig
+
+
+def build_top_states(year_val, region_val, dest_val, park_type_val):
+    """
+    NEW: Top Park per Year (Area chart style)
+    For each year, pick the park with highest visitors and plot area.
+    """
+    df = filter_parks(None, None, region_val, dest_val, park_type_val)
+    if df.empty:
+        yearly = pd.DataFrame({"Year": [0], "Recreation Visits": [0.0]})
+    else:
+        yearly_park = (
+            df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"]
+              .sum()
+        )
+        # take top park each year
+        yearly = (
+            yearly_park.sort_values("Recreation Visits", ascending=False)
+                       .groupby("Year", as_index=False)
+                       .first()
+                       .sort_values("Year")
+        )
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=yearly["Year"],
+            y=yearly["Recreation Visits"],
+            mode="lines",
+            fill="tozeroy",
+            line=dict(color=BUBBLE, width=2),
+            hovertemplate="<b>%{{x}}</b><br>Visits: %{{y:,.0f}}<extra></extra>",
+            showlegend=False,
+        )
+    )
+    fig = _common_layout(fig)
+    fig.update_xaxes(title="", showgrid=False)
+    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
+    return fig
+
+
+def build_yearly_trend(region_val, dest_val, park_type_val):
+    df = filter_parks(None, None, region_val, dest_val, park_type_val)
+    if df.empty:
+        yearly = pd.DataFrame({"Year": [0], "Recreation Visits": [0.0]})
+    else:
+        yearly = (
+            df.groupby("Year", as_index=False)["Recreation Visits"]
+              .sum()
+              .sort_values("Year")
+        )
+
+    fig = px.line(yearly, x="Year", y="Recreation Visits", markers=True)
+    fig = _common_layout(fig)
+    fig.update_traces(line=dict(width=2))
+    fig.update_xaxes(title="Year", showgrid=False)
+    fig.update_yaxes(title="Visits", showgrid=True, gridcolor="rgba(255,255,255,.08)")
+    return fig
+
+
+def build_park_type_bar(year_val, region_val, dest_val, park_type_val):
+    """
+    NEW: Colorful bubble chart for park visits (per year)
+    """
+    df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
+    if df.empty:
+        return _common_layout(go.Figure())
+
+    agg = (
+        df.groupby(["Park", "State", "RegionGroup"], as_index=False)["Recreation Visits"]
+          .sum()
+          .sort_values("Recreation Visits", ascending=False)
+          .head(40)
+    )
+    agg["StateName"] = agg["State"].map(STATE_NAME_MAP)
+
+    fig = px.scatter(
+        agg,
+        x="StateName",
+        y="Park",
+        size="Recreation Visits",
+        color="RegionGroup",
+        size_max=40,
+        hover_name="Park",
+        hover_data={"StateName": True, "RegionGroup": True, "Recreation Visits": ":,.0f"},
+    )
+    fig = _common_layout(fig)
+    fig.update_xaxes(title="State", showgrid=False)
+    fig.update_yaxes(title="", showgrid=False)
+    fig.update_layout(
+        legend_title_text="Region",
+        margin=dict(l=10, r=10, t=10, b=10),
+        hoverlabel=dict(bgcolor="rgba(5,10,24,.95)", font_color="#ffffff"),
     )
     return fig
 
 # =========================
 #  KPI HELPERS
 # =========================
+def fmt_millions(val: float) -> str:
+    if val >= 1e9:
+        return f"{val/1e9:.1f}B"
+    if val >= 1e6:
+        return f"{val/1e6:.1f}M"
+    if val >= 1e3:
+        return f"{val/1e3:.1f}K"
+    return f"{val:.0f}"
+
+
 def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     month_int = int(month_val)
     year_int  = int(year_val)
 
     df_month = filter_parks(month_int, year_int, region_val, dest_val, park_type_val)
-
     if df_month.empty:
         top_park_month = "—"
         total_month = 0.0
-        active = 0
         avg = 0.0
     else:
         g = (
@@ -562,8 +818,7 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
         )
         top_park_month = g.index[0]
         total_month = float(g.sum())
-        active = g.size
-        avg = total_month / max(active, 1)
+        avg = total_month / max(g.size, 1)
 
     df_all = filter_parks(None, None, region_val, dest_val, park_type_val)
     if df_all.empty:
@@ -583,6 +838,8 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     df_year = filter_parks(None, year_int, region_val, dest_val, park_type_val)
     if df_year.empty:
         top_park_year = "—"
+        total_year = 0.0
+        top_state_year = "—"
     else:
         g_year = (
             df_year.groupby("Park")["Recreation Visits"]
@@ -590,6 +847,18 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
                    .sort_values(ascending=False)
         )
         top_park_year = g_year.index[0]
+
+        total_year = float(df_year["Recreation Visits"].sum())
+        state_year = (
+            df_year.groupby("State")["Recreation Visits"]
+                  .sum()
+                  .sort_values(ascending=False)
+        )
+        if len(state_year) == 0:
+            top_state_year = "—"
+        else:
+            top_state_code = state_year.index[0]
+            top_state_year = STATE_NAME_MAP.get(top_state_code, top_state_code)
 
     return {
         "top_park_month": top_park_month,
@@ -599,7 +868,8 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
         "yoy_pct": yoy_pct,
         "yoy_positive": yoy_pct >= 0,
         "top_park_year": top_park_year,
-        "active_parks": active,
+        "total_year": total_year,
+        "top_state_year": top_state_year,
     }
 
 # =========================
@@ -612,95 +882,147 @@ df_map_init  = build_base_map_df(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "A
 init_map     = build_map(df_map_init)
 init_heat    = build_heatmap_real("All", "State", DEFAULT_YEAR, "All")
 init_trend   = build_trend_real(DEFAULT_YEAR, "All", "State", "All")
-init_bubble  = build_top_park_per_year_bubble("All", "State", "All")
-init_top5    = build_top5_parks(DEFAULT_YEAR, "All", "State", "All")
-
-kpi0 = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_top5    = build_top5_parks(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_top_states = build_top_states(DEFAULT_YEAR, "All", "State", "All")
+init_yearly  = build_yearly_trend("All", "State", "All")
+init_ptype   = build_park_type_bar(DEFAULT_YEAR, "All", "State", "All")
+kpi0         = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
 
 # =========================
-#  COMPONENTS
+#  COMPONENTS (CARDS)
 # =========================
-sidebar_filters = dbc.Card(
-    [
-        html.Div("Filters", className="kpi-title mb-2"),
-        html.Div("Month", className="kpi-title"),
-        dcc.Dropdown(
-            id="f-month",
-            className="dash-dropdown",
-            options=[{"label": m, "value": i + 1}
-                     for i, m in enumerate(
-                        ["January","February","March","April","May","June","July",
-                         "August","September","October","November","December"]
-                     )],
-            value=DEFAULT_MONTH,
-            clearable=False,
-        ),
-        html.Div("Year", className="kpi-title mt-2"),
-        dcc.Dropdown(
-            id="f-year",
-            className="dash-dropdown",
-            options=[{"label": str(y), "value": int(y)} for y in YEARS],
-            value=DEFAULT_YEAR,
-            clearable=False,
-        ),
-        html.Div("Region", className="kpi-title mt-2"),
-        dcc.Dropdown(
-            id="f-region",
-            className="dash-dropdown",
-            options=[{"label": r, "value": r}
-                     for r in ["All","East Coast","West","South","Mountain"]],
-            value="All",
-        ),
-        html.Div("Destination Type", className="kpi-title mt-2"),
-        dcc.Dropdown(
-            id="f-dest",
-            className="dash-dropdown",
-            options=[{"label": x, "value": x}
-                     for x in ["State","City","National Park"]],
-            value="State",
-        ),
-        html.Div("Park Type", className="kpi-title mt-2"),
-        dcc.Dropdown(
-            id="f-park-type",
-            className="dash-dropdown",
-            options=(
-                [{"label": "All", "value": "All"}] +
-                [{"label": t, "value": t}
-                 for t in sorted(parks_df["Park Type"].dropna().unique())]
+def filter_dropdowns_card():
+    return dbc.Card(
+        [
+            html.Div("Filters", className="filters-title"),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div("Month", className="filter-label"),
+                            dcc.Dropdown(
+                                id="f-month",
+                                className="dash-dropdown",
+                                options=[
+                                    {"label": m, "value": i + 1}
+                                    for i, m in enumerate(
+                                        [
+                                            "January","February","March","April","May","June",
+                                            "July","August","September","October","November","December"
+                                        ]
+                                    )
+                                ],
+                                value=DEFAULT_MONTH,
+                                clearable=False,
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            html.Div("Year", className="filter-label"),
+                            dcc.Dropdown(
+                                id="f-year",
+                                className="dash-dropdown",
+                                options=[{"label": str(y), "value": int(y)} for y in YEARS],
+                                value=DEFAULT_YEAR,
+                                clearable=False,
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            html.Div("Region", className="filter-label"),
+                            dcc.Dropdown(
+                                id="f-region",
+                                className="dash-dropdown",
+                                options=[
+                                    {"label": r, "value": r}
+                                    for r in ["All","East Coast","West","South","Mountain"]
+                                ],
+                                value="All",
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            html.Div("Destination Type", className="filter-label"),
+                            dcc.Dropdown(
+                                id="f-dest",
+                                className="dash-dropdown",
+                                options=[
+                                    {"label": x, "value": x}
+                                    for x in ["State","City","National Park"]
+                                ],
+                                value="State",
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            html.Div("Park Type", className="filter-label"),
+                            dcc.Dropdown(
+                                id="f-park-type",
+                                className="dash-dropdown",
+                                options=(
+                                    [{"label": "All", "value": "All"}] +
+                                    [
+                                        {"label": t, "value": t}
+                                        for t in sorted(parks_df["Park Type"].dropna().unique())
+                                    ]
+                                ),
+                                value="All",
+                                clearable=False,
+                            ),
+                        ]
+                    ),
+                ],
+                className="filters-row",
             ),
-            value="All",
-            clearable=False,
-            maxHeight=200,
-        ),
-    ],
-    className="soft-card tight",
-    style={"height": MAP_H, "paddingBottom": "18px"},
-)
+        ],
+        className="soft-card filters-card",
+    )
+
 
 def kpi_card(title, idv):
     return html.Div(
         dbc.Card(
             [
                 html.Div(title, className="kpi-title"),
-                html.P(id=idv, children="—", className="kpi-value"),
+                html.Div(id=idv, children="—", className="kpi-value"),
             ],
-            className="soft-card tight h-100",
-        ),
-        className="kpi-col",
+            className="kpi-card-inner",
+        )
     )
 
-kpi_row = html.Div(
+
+def extra_kpi_card(title, idv):
+    return html.Div(
+        dbc.Card(
+            [
+                html.Div(title, className="kpi-title"),
+                html.Div(id=idv, children="—", className="kpi-value"),
+            ],
+            className="kpi-card-inner",
+        )
+    )
+
+# 6 mini cards on left
+kpi_panel = dbc.Card(
     [
-        kpi_card("Top Park (Month)", "kpi-top-park-month"),
-        kpi_card("Avg Visits / Park", "kpi-avg-park"),
-        kpi_card("Total Visitors (Month)", "kpi-total-month"),
-        kpi_card("Peak Year", "kpi-peak-year"),
-        kpi_card("YoY Growth vs Prev Year", "kpi-yoy"),
-        kpi_card("Top Park (Year)", "kpi-top-park-year"),
-        kpi_card("Active Parks (Month)", "kpi-active-parks"),
+        html.Div("Key Signals", className="kpi-title"),
+        html.Div(
+            [
+                kpi_card("Top Park (Month)", "kpi-top-park-month"),
+                kpi_card("Avg Visits / Park", "kpi-avg-park"),
+                kpi_card("Total Visitors (Month)", "kpi-total-month"),
+                kpi_card("Peak Year", "kpi-peak-year"),
+                kpi_card("YoY Growth vs Prev Year", "kpi-yoy"),
+                kpi_card("Top Park (Year)", "kpi-top-park-year"),
+            ],
+            className="kpi-row",
+        ),
     ],
-    className="kpi-row",
-    style={"height": KPI_H},
+    className="soft-card kpi-panel",
 )
 
 map_card = dbc.Card(
@@ -710,128 +1032,323 @@ map_card = dbc.Card(
         style={"height": "100%", "backgroundColor": "transparent"},
         config={"displayModeBar": False},
     ),
-    className="soft-card tight map-card",
-    style={"height": MAP_H},
+    className="soft-card map-card",
 )
 
+# Analytics charts
 heat_card = dbc.Card(
     [
-        html.Div("Seasonality Heatmap (Region × Season)", className="kpi-title mb-1"),
+        html.Div("Region–Season Heat", className="chart-title"),
         dcc.Graph(
-            id="heatmap",
+            id="heatmap-analytics",
             figure=init_heat,
             style={"height": CHART_H},
             config={"displayModeBar": False},
         ),
     ],
-    className="soft-card tight",
+    className="soft-card chart-card",
 )
 
 trend_card = dbc.Card(
     [
-        html.Div("Drilldown — Tourist Inflows (Year)", className="kpi-title mb-1"),
+        html.Div("Monthly Trend", className="chart-title"),
         dcc.Graph(
-            id="trend",
+            id="trend-analytics",
             figure=init_trend,
             style={"height": CHART_H},
             config={"displayModeBar": False},
         ),
     ],
-    className="soft-card tight",
-)
-
-bubble_card = dbc.Card(
-    [
-        html.Div("Top Park per Year (Area)", className="kpi-title mb-1"),
-        dcc.Graph(
-            id="top-park-year-chart",
-            figure=init_bubble,
-            style={"height": CHART_H},
-            config={"displayModeBar": False},
-        ),
-    ],
-    className="soft-card tight",
+    className="soft-card chart-card",
 )
 
 top5_parks_card = dbc.Card(
     [
-        html.Div("Top 5 Parks by Annual Visitors", className="kpi-title mb-1"),
+        html.Div("Top 5 Parks (Month)", className="chart-title"),
         dcc.Graph(
-            id="top5-parks",
+            id="top5-parks-analytics",
             figure=init_top5,
             style={"height": CHART_H},
             config={"displayModeBar": False},
         ),
     ],
-    className="soft-card tight",
+    className="soft-card chart-card",
 )
 
-# =========================
-#  LAYOUT
-# =========================
-app.layout = dbc.Container(
+top_states_card = dbc.Card(
     [
-        dbc.Row(
-            [
-                dbc.Col(
-                    html.Div("Tourist Flow & Seasonality Analyzer",
-                             className="section-title"),
-                    width=12,
-                )
-            ],
-            className="g-0",
-            style={"height": "6vh", "marginTop": TITLE_TOP},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    [sidebar_filters],
-                    width=4,
-                    style={"display": "flex",
-                           "flexDirection": "column",
-                           "height": COLUMN_H},
-                ),
-                dbc.Col(
-                    [map_card],
-                    width=8,
-                    style={"display": "flex",
-                           "flexDirection": "column",
-                           "height": COLUMN_H},
-                ),
-            ],
-            className="gx-3 gy-0",
-            style={"marginBottom": "4px"},
-        ),
-        dbc.Row(
-            [dbc.Col(kpi_row, width=12)],
-            className="gx-3 gy-0",
-            style={"marginBottom": "11px"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(heat_card, width=3),
-                dbc.Col(trend_card, width=3),
-                dbc.Col(bubble_card, width=3),
-                dbc.Col(top5_parks_card, width=3),
-            ],
-            className="gx-3 gy-0",
+        html.Div("Top Park per Year (Area)", className="chart-title"),
+        dcc.Graph(
+            id="top-states-analytics",
+            figure=init_top_states,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
         ),
     ],
-    fluid=True,
-    className="dbc-container pb-2",
-    style={"height": "100vh", "overflow": "hidden"},
+    className="soft-card chart-card",
+)
+
+yearly_card = dbc.Card(
+    [
+        html.Div("Yearly Visitors Trend", className="chart-title"),
+        dcc.Graph(
+            id="yearly-analytics",
+            figure=init_yearly,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card chart-card",
+)
+
+park_type_card = dbc.Card(
+    [
+        html.Div("Park Visits Bubble Chart", className="chart-title"),
+        dcc.Graph(
+            id="park-type-analytics",
+            figure=init_ptype,
+            style={"height": CHART_H},
+            config={"displayModeBar": False},
+        ),
+    ],
+    className="soft-card chart-card",
 )
 
 # =========================
-#  CALLBACKS — FIGURES
+#  PAGE LAYOUTS
+# =========================
+def dashboard_layout():
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div("Tourist Flow & Seasonality Analyzer",
+                                     className="page-title"),
+                            html.Div(
+                                "Explore how national parks and destinations move between hotspot, normal and off-season across the U.S.",
+                                className="page-subtitle",
+                            ),
+                        ]
+                    ),
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.Span(className="badge-dot"),
+                                    html.Span("Live Exploration", style={"fontWeight": 500}),
+                                ],
+                                className="badge-chip",
+                            )
+                        ]
+                    ),
+                ],
+                className="header-card",
+            ),
+
+            filter_dropdowns_card(),
+
+            html.Div(
+                [
+                    html.Div(kpi_panel),
+
+                    html.Div(
+                        [
+                            map_card,
+                            html.Div(
+                                [
+                                    extra_kpi_card("Total Visitors (Year)", "kpi-total-year"),
+                                    extra_kpi_card("Most Visited State (Year)", "kpi-top-state-year"),
+                                ],
+                                className="extra-map-kpi-row",
+                            ),
+                        ],
+                        className="map-side-wrapper",
+                    ),
+                ],
+                className="main-row",
+            ),
+        ],
+        className="page-body",
+    )
+
+
+def analytics_layout():
+    return html.Div(
+        [
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            html.Div("Analytics Deep Dive",
+                                     className="page-title"),
+                            html.Div(
+                                "Seasonality patterns, yearly movement and state-level leaders driven by your filters.",
+                                className="page-subtitle",
+                            ),
+                        ]
+                    ),
+                ],
+                className="header-card",
+            ),
+
+            filter_dropdowns_card(),
+
+            html.Div(
+                [
+                    heat_card,
+                    trend_card,
+                    top5_parks_card,
+                    top_states_card,
+                    yearly_card,
+                    park_type_card,
+                ],
+                className="charts-grid",
+            ),
+        ],
+        className="page-body",
+    )
+
+
+def reports_layout():
+    return dbc.Container(
+        dbc.Card(
+            [
+                html.H3("Reports", className="kpi-title mb-2"),
+                html.P(
+                    "Reserved for PDF exports, narrative summaries, and stakeholder-ready reports.",
+                    style={"fontSize": "14px"},
+                ),
+            ],
+            className="soft-card",
+            style={"marginTop": "16px"},
+        ),
+        fluid=True,
+        className="dbc-container pb-2",
+        style={"height": "100vh", "overflow": "hidden"},
+    )
+
+
+def settings_layout():
+    return dbc.Container(
+        dbc.Card(
+            [
+                html.H3("Settings", className="kpi-title mb-2"),
+            html.P(
+                    "Space for theme toggles, default filters and user preferences.",
+                    style={"FontSize": "14px"},
+                ),
+            ],
+            className="soft-card",
+            style={"marginTop": "16px"},
+        ),
+        fluid=True,
+        className="dbc-container pb-2",
+        style={"height": "100vh", "overflow": "hidden"},
+    )
+
+# =========================
+#  SIDEBAR + MAIN LAYOUT
+# =========================
+sidebar = html.Div(
+    [
+        html.Div("TFSA", className="sidebar-logo"),
+        html.Div("Tourist Flow & Seasonality", className="sidebar-subtitle"),
+        dbc.Nav(
+            [
+                dbc.NavLink(
+                    [html.Span(className="dot"), "Dashboard"],
+                    href="/",
+                    active="exact",
+                    className="nav-link",
+                ),
+                dbc.NavLink(
+                    [html.Span(className="dot"), "Analytics"],
+                    href="/analytics",
+                    active="exact",
+                    className="nav-link",
+                ),
+                dbc.NavLink(
+                    [html.Span(className="dot"), "Reports"],
+                    href="/reports",
+                    active="exact",
+                    className="nav-link",
+                ),
+                dbc.NavLink(
+                    [html.Span(className="dot"), "Settings"],
+                    href="/settings",
+                    active="exact",
+                    className="nav-link",
+                ),
+            ],
+            vertical=True,
+            pills=True,
+            className="sidebar-nav",
+        ),
+        html.Div(
+            "Capstone · National Parks Visitor Insights",
+            className="sidebar-footer",
+        ),
+    ],
+    className="sidebar",
+)
+
+app.layout = html.Div(
+    [
+        dcc.Location(id="url", refresh=False),
+        html.Div(sidebar, className=""),
+        html.Div(id="page-content", className="content-wrapper"),
+    ],
+    className="layout-root",
+)
+
+# =========================
+#  PAGE SWITCHING
+# =========================
+@app.callback(
+    Output("page-content", "children"),
+    Input("url", "pathname"),
+)
+def render_page(pathname):
+    if pathname in ["/", "/dashboard", None]:
+        return dashboard_layout()
+    if pathname == "/analytics":
+        return analytics_layout()
+    if pathname == "/reports":
+        return reports_layout()
+    if pathname == "/settings":
+        return settings_layout()
+    return dashboard_layout()
+
+# =========================
+#  CALLBACKS — MAP
+# =========================
+@app.callback(
+    Output("us-map", "figure"),
+    [
+        Input("f-month", "value"),
+        Input("f-year", "value"),
+        Input("f-region", "value"),
+        Input("f-dest", "value"),
+        Input("f-park-type", "value"),
+    ],
+)
+def update_map(month_val, year_val, region_val, dest_val, park_type_val):
+    dfm = build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val)
+    return build_map(dfm)
+
+# =========================
+#  CALLBACKS — ANALYTICS CHARTS
 # =========================
 @app.callback(
     [
-        Output("us-map", "figure"),
-        Output("heatmap", "figure"),
-        Output("trend", "figure"),
-        Output("top-park-year-chart", "figure"),
-        Output("top5-parks", "figure"),
+        Output("heatmap-analytics", "figure"),
+        Output("trend-analytics", "figure"),
+        Output("top5-parks-analytics", "figure"),
+        Output("top-states-analytics", "figure"),
+        Output("yearly-analytics", "figure"),
+        Output("park-type-analytics", "figure"),
     ],
     [
         Input("f-month", "value"),
@@ -841,14 +1358,14 @@ app.layout = dbc.Container(
         Input("f-park-type", "value"),
     ],
 )
-def update_all(month_val, year_val, region_val, dest_val, park_type_val):
-    dfm = build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val)
-    map_out   = build_map(dfm)
-    heat_out  = build_heatmap_real(region_val, dest_val, year_val, park_type_val)
-    trend_out = build_trend_real(year_val, region_val, dest_val, park_type_val)
-    bubble_out = build_top_park_per_year_bubble(region_val, dest_val, park_type_val)
-    top5_out  = build_top5_parks(year_val, region_val, dest_val, park_type_val)
-    return map_out, heat_out, trend_out, bubble_out, top5_out
+def update_analytics_charts(month_val, year_val, region_val, dest_val, park_type_val):
+    heat_out   = build_heatmap_real(region_val, dest_val, year_val, park_type_val)
+    trend_out  = build_trend_real(year_val, region_val, dest_val, park_type_val)
+    top5_out   = build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val)
+    states_out = build_top_states(year_val, region_val, dest_val, park_type_val)
+    yearly_out = build_yearly_trend(region_val, dest_val, park_type_val)
+    ptype_out  = build_park_type_bar(year_val, region_val, dest_val, park_type_val)
+    return heat_out, trend_out, top5_out, states_out, yearly_out, ptype_out
 
 # =========================
 #  CALLBACKS — KPIs
@@ -862,7 +1379,8 @@ def update_all(month_val, year_val, region_val, dest_val, park_type_val):
         Output("kpi-yoy", "children"),
         Output("kpi-yoy", "style"),
         Output("kpi-top-park-year", "children"),
-        Output("kpi-active-parks", "children"),
+        Output("kpi-total-year", "children"),
+        Output("kpi-top-state-year", "children"),
     ],
     [
         Input("f-month", "value"),
@@ -874,24 +1392,22 @@ def update_all(month_val, year_val, region_val, dest_val, park_type_val):
 )
 def update_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     k = compute_kpis(month_val, year_val, region_val, dest_val, park_type_val)
-
     yoy_text = f"{k['yoy_pct']:+.1f}%"
     yoy_style = {"color": "#4ade80" if k["yoy_positive"] else "#f97373"}
-
     return (
         k["top_park_month"],
         f"{k['avg_per_park']:,.0f}",
-        f"{k['total_month']:,.0f}",
+        fmt_millions(k["total_month"]),
         str(k["peak_year"]),
         yoy_text,
         yoy_style,
         k["top_park_year"],
-        str(k["active_parks"]),
+        fmt_millions(k["total_year"]),
+        k["top_state_year"],
     )
 
 # =========================
 #  RUN
 # =========================
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8050, debug=False)
+    app.run(debug=False)
