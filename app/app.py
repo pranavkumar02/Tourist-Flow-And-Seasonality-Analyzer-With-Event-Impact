@@ -1,5 +1,4 @@
 import math
-from pathlib import Path
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -1282,7 +1281,7 @@ def settings_layout():
                 html.H3("Settings", className="kpi-title mb-2"),
                 html.P(
                     "Space for theme toggles, default filters and user preferences.",
-                    style={"FontSize": "14px"},
+                    style={"fontSize": "14px"},
                 ),
             ],
             className="soft-card",
