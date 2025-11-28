@@ -1,9 +1,0 @@
-jupyter
-dash
-dash-bootstrap-components
-plotly
-pandas
-numpy
-SQLAlchemy
-psycopg2-binary
-python-dotenv
