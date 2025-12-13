@@ -1,4 +1,4 @@
-#core.py
+# core.py
 
 import os
 import numpy as np
@@ -18,20 +18,82 @@ from theme import (
     CORAL,
     BUBBLE,
 )
-from db import get_engine
+from src.db import get_engine  # <- IMPORTANT: use src.db, not db
+
 # =========================================================
-# DATA  (FROM RDS)
+# DATA  (RDS with local CSV + forecast fallback)
 # =========================================================
 
-engine = get_engine()
+BASE_DIR = os.path.dirname(__file__)
 
-# table name in RDS 
 TABLE_NAME = "parks_visits"
 
-parks_df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", engine)
+# 1) Try RDS first, otherwise use local CSV
+try:
+    engine = get_engine()
+    parks_df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", engine)
+except Exception as e:
+    print("WARNING: Could not connect to RDS, using local CSV instead.")
+    print("Reason:", repr(e))
+    local_csv = os.path.join(BASE_DIR, "all_parks_recreation_visits.csv")
+    parks_df = pd.read_csv(local_csv)
 
+# Mark all rows loaded so far as historical (not forecast)
+parks_df["IsForecast"] = False
 
-parks_df = parks_df.dropna(subset=["State", "Park", "Month", "Year", "Recreation Visits"])
+# 2) Load monthly_forecasts.csv and append FUTURE years only
+FORECAST_PATH = os.path.join(BASE_DIR, "monthly_forecasts.csv")
+
+if os.path.exists(FORECAST_PATH):
+    fc_df = pd.read_csv(FORECAST_PATH)
+
+    # Expected columns (from your screenshots):
+    # Park, Best_Model, Forecast_Month, Predicted_Visits,
+    # Unit Code, Park Type, Region, State, Year, Month, _source_file
+
+    # If Forecast_Month exists, convert to Year / Month
+    if "Forecast_Month" in fc_df.columns:
+        fc_df["Forecast_Month"] = pd.to_datetime(
+            fc_df["Forecast_Month"],
+            dayfirst=True,        # because it's like 01-01-2025
+            errors="coerce",
+        )
+        fc_df["Year"] = fc_df["Forecast_Month"].dt.year
+        fc_df["Month"] = fc_df["Forecast_Month"].dt.month
+
+    # Match visit column name
+    if "Predicted_Visits" in fc_df.columns:
+        fc_df = fc_df.rename(columns={"Predicted_Visits": "Recreation Visits"})
+
+    # Ensure required columns exist
+    required_cols = ["Park", "State", "Year", "Month", "Recreation Visits", "Park Type"]
+    for col in required_cols:
+        if col not in fc_df.columns:
+            fc_df[col] = np.nan
+
+    # Keep only years AFTER the last historical year
+    hist_latest = pd.to_numeric(parks_df["Year"], errors="coerce").max()
+    fc_df = fc_df[pd.to_numeric(fc_df["Year"], errors="coerce") > hist_latest]
+
+    # Mark as forecast
+    fc_df["IsForecast"] = True
+
+    # Align columns where possible and append
+    common_cols = list(set(parks_df.columns).intersection(fc_df.columns))
+    parks_df = pd.concat(
+        [parks_df, fc_df[common_cols]],
+        ignore_index=True,
+        sort=False,
+    )
+
+# =========================================================
+# CLEANING
+# =========================================================
+
+parks_df = parks_df.dropna(
+    subset=["State", "Park", "Month", "Year", "Recreation Visits"]
+)
+
 parks_df["State"] = parks_df["State"].astype(str).str.strip()
 parks_df["Park"] = parks_df["Park"].astype(str).str.strip()
 parks_df["Month"] = parks_df["Month"].astype(int)
@@ -41,29 +103,46 @@ parks_df["Recreation Visits"] = parks_df["Recreation Visits"].astype(float)
 if "Park Type" not in parks_df.columns:
     parks_df["Park Type"] = "Unknown"
 
+# =========================================================
+# CONSTANTS / HELPERS
+# =========================================================
+
 state_codes = [
-    "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY",
-    "LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND",
-    "OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN",
+    "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV",
+    "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN",
+    "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
 ]
 state_names = [
-    "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
-    "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
-    "Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
-    "Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico",
-    "New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
-    "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
-    "Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia"
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+    "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+    "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+    "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+    "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
+    "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia",
 ]
 STATE_NAME_MAP = dict(zip(state_codes, state_names))
 
 REGIONS = {
-    "East Coast": ["ME","NH","MA","RI","CT","NY","NJ","PA","DE","MD","DC","VA","NC","SC","GA","FL"],
-    "West": ["CA","OR","WA","AK","HI"],
-    "South": ["TX","OK","AR","LA","MS","AL","TN","KY","GA","FL","SC","NC","VA","WV","MD","DC","DE"],
-    "Mountain": ["AZ","NM","CO","UT","NV","ID","MT","WY"],
+    "East Coast": [
+        "ME", "NH", "MA", "RI", "CT", "NY", "NJ", "PA", "DE",
+        "MD", "DC", "VA", "NC", "SC", "GA", "FL",
+    ],
+    "West": ["CA", "OR", "WA", "AK", "HI"],
+    "South": [
+        "TX", "OK", "AR", "LA", "MS", "AL", "TN", "KY", "GA", "FL",
+        "SC", "NC", "VA", "WV", "MD", "DC", "DE",
+    ],
+    "Mountain": ["AZ", "NM", "CO", "UT", "NV", "ID", "MT", "WY"],
 }
-ALL_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+ALL_MONTHS = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+]
 
 
 def map_region_group(state_code: str) -> str:
@@ -74,14 +153,21 @@ def map_region_group(state_code: str) -> str:
 
 
 parks_df["RegionGroup"] = parks_df["State"].map(map_region_group)
+
 YEARS = sorted(parks_df["Year"].unique())
-LATEST_YEAR = max(YEARS)
+LATEST_YEAR = max(YEARS) if YEARS else 0
 
 # ===============
 # FILTERING
 # ===============
-def filter_parks(month_val=None, year_val=None, region_val=None,
-                 dest_val=None, park_type_val=None):
+
+def filter_parks(
+    month_val=None,
+    year_val=None,
+    region_val=None,
+    dest_val=None,
+    park_type_val=None,
+):
     """
     Common filter used by ALL charts / KPIs.
     Month + Year + Region + Destination + Park Type.
@@ -111,6 +197,7 @@ def filter_parks(month_val=None, year_val=None, region_val=None,
 # ==============
 # MAP HELPERS
 # ==============
+
 def classify_state_status(month_val, year_val, region_val, dest_val, park_type_val):
     df = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
     if df.empty:
@@ -133,20 +220,22 @@ def classify_state_status(month_val, year_val, region_val, dest_val, park_type_v
 
     for s in state_codes:
         status.setdefault(s, "Normal")
+
     return status
 
 
 def build_base_map_df(month_val, year_val, region_val, dest_val, park_type_val):
     status_map = classify_state_status(month_val, year_val, region_val, dest_val, park_type_val)
-
-    df = pd.DataFrame({
-        "state": state_codes,
-        "state_name": [STATE_NAME_MAP[s] for s in state_codes],
-        "lift": [status_map[s] for s in state_codes],
-    })
-    df["lift"] = pd.Categorical(df["lift"],
-                                categories=CATEGORY_ORDER["lift"],
-                                ordered=True)
+    df = pd.DataFrame(
+        {
+            "state": state_codes,
+            "state_name": [STATE_NAME_MAP[s] for s in state_codes],
+            "lift": [status_map[s] for s in state_codes],
+        }
+    )
+    df["lift"] = pd.Categorical(
+        df["lift"], categories=CATEGORY_ORDER["lift"], ordered=True
+    )
 
     df_month = filter_parks(month_val, year_val, region_val, dest_val, park_type_val)
     if df_month.empty:
@@ -199,11 +288,14 @@ def build_map(df):
         category_orders=CATEGORY_ORDER,
         scope="usa",
         hover_name="state_name",
-        hover_data={"state": False, "state_name": False,
-                    "lift": True, "hover_parks": False},
+        hover_data={
+            "state": False,
+            "state_name": False,
+            "lift": True,
+            "hover_parks": False,
+        },
         labels={"lift": "Status"},
     )
-
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
@@ -229,7 +321,6 @@ def build_map(df):
             font_color="#ffffff",
         ),
     )
-
     fig.update_traces(
         hovertemplate=(
             "<b>%{customdata[1]}</b>"
@@ -237,22 +328,17 @@ def build_map(df):
             "<br>Top parks: %{customdata[2]}<extra></extra>"
         )
     )
-
     return fig
 
 # =====================
 # ANALYTICS FIGURES
 # =====================
+
 def build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val):
     """
-    Region–Season heatmap.
-
-    NOTE: We intentionally ignore month_val here so the heatmap
-    always uses ALL months of the selected year, giving a full
-    4-season view (no single blue stripe).
+    Region–Season heatmap for ALL months in the selected year.
     """
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
-
     if df.empty:
         order_regions = ["East Coast", "Mountain", "South", "West"]
         seasons = ["Spring", "Summer", "Fall", "Winter"]
@@ -268,11 +354,7 @@ def build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
             return "Winter"
 
         df["Season"] = df["Month"].apply(month_to_season)
-
-        agg = (
-            df.groupby(["RegionGroup", "Season"], as_index=False)["Recreation Visits"]
-              .sum()
-        )
+        agg = df.groupby(["RegionGroup", "Season"], as_index=False)["Recreation Visits"].sum()
         agg = agg[agg["RegionGroup"] != "Other"]
 
         order_regions = ["East Coast", "Mountain", "South", "West"]
@@ -280,8 +362,8 @@ def build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
 
         pivot = (
             agg.pivot(index="RegionGroup", columns="Season", values="Recreation Visits")
-               .reindex(index=order_regions, columns=seasons)
-               .fillna(0.0)
+            .reindex(index=order_regions, columns=seasons)
+            .fillna(0.0)
         )
 
     fig = px.imshow(
@@ -291,7 +373,6 @@ def build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
         labels=dict(color="Visits"),
         text_auto=False,
     )
-
     fig = _common_layout(fig)
     fig.update_layout(
         coloraxis_colorbar=dict(
@@ -303,7 +384,6 @@ def build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
     return fig
 
 
-
 def build_dashboard_sparkline(year_val, region_val, dest_val, park_type_val):
     df = filter_parks(None, year_val, region_val, dest_val, park_type_val)
     if df.empty:
@@ -313,7 +393,6 @@ def build_dashboard_sparkline(year_val, region_val, dest_val, park_type_val):
         visits = [agg["Recreation Visits"].get(m, 0.0) for m in range(1, 13)]
 
     dfl = pd.DataFrame({"MonthName": ALL_MONTHS, "Visits": visits})
-
     fig = px.line(dfl, x="MonthName", y="Visits", markers=True)
     fig = _common_layout(fig)
     fig.update_traces(
@@ -330,8 +409,7 @@ def build_dashboard_sparkline(year_val, region_val, dest_val, park_type_val):
 
 def build_yearly_trend_overall(month_val, year_val, region_val, dest_val, park_type_val):
     """
-    Yearly visitors trend for the SELECTED month across years.
-    So changing MONTH will change this line.
+    Yearly visitors trend for the selected MONTH across years.
     """
     df = filter_parks(month_val, None, region_val, dest_val, park_type_val)
     if df.empty:
@@ -339,8 +417,8 @@ def build_yearly_trend_overall(month_val, year_val, region_val, dest_val, park_t
     else:
         agg = (
             df.groupby("Year", as_index=False)["Recreation Visits"]
-              .sum()
-              .sort_values("Year")
+            .sum()
+            .sort_values("Year")
         )
         if year_val is not None and len(agg):
             agg = agg[agg["Year"] <= int(year_val)]
@@ -364,14 +442,13 @@ def build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val):
     else:
         agg = (
             df.groupby("Park", as_index=False)["Recreation Visits"]
-              .sum()
-              .sort_values("Recreation Visits", ascending=False)
-              .head(5)
+            .sum()
+            .sort_values("Recreation Visits", ascending=False)
+            .head(5)
         )
         parks = agg
 
     parks["ParkShort"] = parks["Park"].str.slice(0, 22)
-
     fig = px.pie(
         parks,
         names="ParkShort",
@@ -403,17 +480,16 @@ def build_top_states(month_val, year_val, region_val, dest_val, park_type_val):
     """
     df = filter_parks(month_val, None, region_val, dest_val, park_type_val)
     if df.empty:
-        yearly = pd.DataFrame({"Year": [0], "Recreation Visits": [0.0], "TopPark": ["—"]})
-    else:
-        yearly_park = (
-            df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"]
-              .sum()
+        yearly = pd.DataFrame(
+            {"Year": [0], "Recreation Visits": [0.0], "TopPark": ["—"]}
         )
+    else:
+        yearly_park = df.groupby(["Year", "Park"], as_index=False)["Recreation Visits"].sum()
         yearly = (
             yearly_park.sort_values("Recreation Visits", ascending=False)
-                       .groupby("Year", as_index=False)
-                       .first()
-                       .sort_values("Year")
+            .groupby("Year", as_index=False)
+            .first()
+            .sort_values("Year")
         )
         yearly = yearly.rename(columns={"Park": "TopPark"})
 
@@ -426,7 +502,10 @@ def build_top_states(month_val, year_val, region_val, dest_val, park_type_val):
             fill="tozeroy",
             line=dict(color=BUBBLE, width=2),
             customdata=yearly["TopPark"],
-            hovertemplate="<b>%{x}</b><br>Top park: %{customdata}<br>Visits: %{y:,.0f}<extra></extra>",
+            hovertemplate=(
+                "<b>%{x}</b><br>Top park: %{customdata}"
+                "<br>Visits: %{y:,.0f}<extra></extra>"
+            ),
             showlegend=False,
         )
     )
@@ -446,9 +525,9 @@ def build_active_parks_per_year(month_val, year_val, region_val, dest_val, park_
     else:
         agg = (
             df.groupby(["Year"])["Park"]
-              .nunique()
-              .reset_index(name="ActiveParks")
-              .sort_values("Year")
+            .nunique()
+            .reset_index(name="ActiveParks")
+            .sort_values("Year")
         )
         if year_val is not None and len(agg):
             agg = agg[agg["Year"] <= int(year_val)]
@@ -470,10 +549,7 @@ def build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_ty
     if df.empty:
         states = pd.DataFrame({"State": ["—"], "Recreation Visits": [0.0]})
     else:
-        states = (
-            df.groupby("State", as_index=False)["Recreation Visits"]
-              .sum()
-        )
+        states = df.groupby("State", as_index=False)["Recreation Visits"].sum()
 
     if states["Recreation Visits"].max() > 0:
         visits = states["Recreation Visits"]
@@ -497,7 +573,10 @@ def build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_ty
         texttemplate="$%{text:.0f}",
         textposition="outside",
         marker=dict(line=dict(width=0)),
-        hovertemplate="<b>%{y}</b><br>Avg spend: $%{x:.0f}<br>Visits index: %{customdata}<extra></extra>",
+        hovertemplate=(
+            "<b>%{y}</b><br>Avg spend: $%{x:.0f}"
+            "<br>Visits index: %{customdata}<extra></extra>"
+        ),
         customdata=states["Recreation Visits"],
     )
     fig.update_layout(
@@ -506,7 +585,7 @@ def build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_ty
     )
     fig.update_xaxes(
         title="Avg spend per visitor ($)",
-        showgrid=False
+        showgrid=False,
     )
     fig.update_yaxes(title="", showgrid=False)
     return fig
@@ -514,6 +593,7 @@ def build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_ty
 # ===========
 # KPIs
 # ===========
+
 def fmt_millions(val: float) -> str:
     if val >= 1e9:
         return f"{val/1e9:.1f}B"
@@ -526,7 +606,7 @@ def fmt_millions(val: float) -> str:
 
 def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     month_int = int(month_val)
-    year_int  = int(year_val)
+    year_int = int(year_val)
 
     df_month = filter_parks(month_int, year_int, region_val, dest_val, park_type_val)
     if df_month.empty:
@@ -536,8 +616,8 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     else:
         g = (
             df_month.groupby("Park")["Recreation Visits"]
-                    .sum()
-                    .sort_values(ascending=False)
+            .sum()
+            .sort_values(ascending=False)
         )
         top_park_month = g.index[0]
         total_month = float(g.sum())
@@ -551,6 +631,7 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
         yearly = df_all.groupby("Year", as_index=False)["Recreation Visits"].sum()
         peak_row = yearly.sort_values("Recreation Visits", ascending=False).iloc[0]
         peak_year = int(peak_row["Year"])
+
         curr = yearly[yearly["Year"] == year_int]["Recreation Visits"]
         prev = yearly[yearly["Year"] == (year_int - 1)]["Recreation Visits"]
         if curr.empty or prev.empty or prev.iloc[0] == 0:
@@ -566,16 +647,16 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
     else:
         g_year = (
             df_year.groupby("Park")["Recreation Visits"]
-                   .sum()
-                   .sort_values(ascending=False)
+            .sum()
+            .sort_values(ascending=False)
         )
         top_park_year = g_year.index[0]
-
         total_year = float(df_year["Recreation Visits"].sum())
+
         state_year = (
             df_year.groupby("State")["Recreation Visits"]
-                  .sum()
-                  .sort_values(ascending=False)
+            .sum()
+            .sort_values(ascending=False)
         )
         if len(state_year) == 0:
             top_state_year = "—"
@@ -598,22 +679,24 @@ def compute_kpis(month_val, year_val, region_val, dest_val, park_type_val):
 # ==================
 # INITIAL FIGURES
 # ==================
-DEFAULT_MONTH = 7
-DEFAULT_YEAR  = LATEST_YEAR
 
-df_map_init     = build_base_map_df(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_map        = build_map(df_map_init)
-init_heat       = build_heatmap_real(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_trend      = build_yearly_trend_overall(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_top5       = build_top5_parks(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+DEFAULT_MONTH = 7
+DEFAULT_YEAR = LATEST_YEAR
+
+df_map_init = build_base_map_df(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_map = build_map(df_map_init)
+init_heat = build_heatmap_real(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_trend = build_yearly_trend_overall(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_top5 = build_top5_parks(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
 init_top_states = build_top_states(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_yearly     = build_active_parks_per_year(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-init_ptype      = build_avg_spend_per_state(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
-kpi0            = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_yearly = build_active_parks_per_year(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+init_ptype = build_avg_spend_per_state(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
+kpi0 = compute_kpis(DEFAULT_MONTH, DEFAULT_YEAR, "All", "State", "All")
 
 # ============
 # CALLBACKS
 # ============
+
 def register_callbacks(app):
     # MAP
     @app.callback(
@@ -657,7 +740,8 @@ def register_callbacks(app):
         k = compute_kpis(month_val, year_val, region_val, dest_val, park_type_val)
         month_name = ALL_MONTHS[int(month_val) - 1]
         bullets = [
-            f"In {month_name} {year_val}, {fmt_millions(k['total_month'])} visitors are recorded under the current view.",
+            f"In {month_name} {year_val}, {fmt_millions(k['total_month'])} "
+            f"visitors are recorded under the current view.",
             f"Top park this month is {k['top_park_month']} and the yearly leader is {k['top_park_year']}.",
             f"Visitor volume is {k['yoy_pct']:+.1f}% vs previous year, with peak year at {k['peak_year']}.",
         ]
@@ -682,12 +766,12 @@ def register_callbacks(app):
         ],
     )
     def update_analytics_charts(month_val, year_val, region_val, dest_val, park_type_val):
-        heat_out   = build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
-        trend_out  = build_yearly_trend_overall(month_val, year_val, region_val, dest_val, park_type_val)
-        top5_out   = build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val)
+        heat_out = build_heatmap_real(month_val, year_val, region_val, dest_val, park_type_val)
+        trend_out = build_yearly_trend_overall(month_val, year_val, region_val, dest_val, park_type_val)
+        top5_out = build_top5_parks(month_val, year_val, region_val, dest_val, park_type_val)
         states_out = build_top_states(month_val, year_val, region_val, dest_val, park_type_val)
         yearly_out = build_active_parks_per_year(month_val, year_val, region_val, dest_val, park_type_val)
-        ptype_out  = build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_type_val)
+        ptype_out = build_avg_spend_per_state(month_val, year_val, region_val, dest_val, park_type_val)
         return heat_out, trend_out, top5_out, states_out, yearly_out, ptype_out
 
     # KPIs – mini cards
@@ -727,7 +811,7 @@ def register_callbacks(app):
             k["top_state_year"],
         )
 
-    # FILTERS BUTTON 
+    # FILTERS BUTTON
     @app.callback(
         [
             Output("f-month", "value"),
